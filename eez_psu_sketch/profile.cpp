@@ -21,6 +21,7 @@
 #include "persist_conf.h"
 #include "datetime.h"
 #include "event_queue.h"
+#include "channel_coupling.h"
 
 namespace eez {
 namespace psu {
@@ -106,7 +107,9 @@ bool recallFromProfile(Parameters *profile) {
 		memcpy(&temperature::sensors[i].prot_conf, profile->temp_prot + i, sizeof(temperature::ProtectionConfiguration));
 	}
 
-    if (profile->power_is_up) result &= psu::powerUp();
+    channel_coupling::setType((channel_coupling::Type)profile->flags.channelsCoupling);
+
+    if (profile->flags.powerIsUp) result &= psu::powerUp();
     else psu::powerDown();
 
     recallChannelsFromProfile(profile);
@@ -119,7 +122,7 @@ bool recallFromProfile(Parameters *profile) {
 bool recall(int location) {
     if (location > 0 && location < NUM_PROFILE_LOCATIONS) {
         Parameters profile;
-        if (persist_conf::loadProfile(location, &profile) && profile.is_valid) {
+        if (persist_conf::loadProfile(location, &profile) && profile.flags.isValid) {
             if (persist_conf::saveProfile(0, &profile)) {
                 if (recallFromProfile(&profile)) {
 					event_queue::pushEvent(event_queue::EVENT_INFO_RECALL_FROM_PROFILE_0 + location);
@@ -135,13 +138,13 @@ bool recall(int location) {
 
 bool load(int location, Parameters *profile) {
     if (location >= 0 && location < NUM_PROFILE_LOCATIONS) {
-        return persist_conf::loadProfile(location, profile) && profile->is_valid;
+        return persist_conf::loadProfile(location, profile) && profile->flags.isValid;
     }
     return false;
 }
 
 void getSaveName(const Parameters *profile, char *name) {
-	if (!profile->is_valid || strncmp_P(profile->name, AUTO_NAME_PREFIX, strlen(AUTO_NAME_PREFIX)) == 0) {
+	if (!profile->flags.isValid || strncmp_P(profile->name, AUTO_NAME_PREFIX, strlen(AUTO_NAME_PREFIX)) == 0) {
 		strcpy_P(name, AUTO_NAME_PREFIX);
 		datetime::getDateTimeAsString(name + strlen(AUTO_NAME_PREFIX));
 	} else {
@@ -167,13 +170,16 @@ void saveImmediately() {
 bool saveAtLocation(int location, char *name) {
     if (location >= 0 && location < NUM_PROFILE_LOCATIONS) {
         Parameters currentProfile;
+
         if (!persist_conf::loadProfile(location, &currentProfile)) {
-            currentProfile.is_valid = false;
+            currentProfile.flags.isValid = false;
         }
 
         Parameters profile;
 
-        profile.is_valid = true;
+        profile.flags.isValid = true;
+
+        profile.flags.channelsCoupling = channel_coupling::getType();
 
         // name
         memset(profile.name, 0, sizeof(profile.name));
@@ -187,7 +193,7 @@ bool saveAtLocation(int location, char *name) {
 
         noInterrupts();
 
-        profile.power_is_up = psu::isPowerUp();
+        profile.flags.powerIsUp = psu::isPowerUp();
 
         for (int i = 0; i < CH_MAX; ++i) {
 			if (i < CH_NUM) {
@@ -270,7 +276,7 @@ bool deleteLocation(int location) {
     bool result = false;
     if (location > 0 && location < NUM_PROFILE_LOCATIONS) {
         Parameters profile;
-        profile.is_valid = false;
+        profile.flags.isValid = false;
         if (location == persist_conf::getProfileAutoRecallLocation()) {
             persist_conf::setProfileAutoRecallLocation(0);
         }
@@ -292,7 +298,7 @@ bool isValid(int location) {
     if (location >= 0 && location < NUM_PROFILE_LOCATIONS) {
         Parameters profile;
         if (persist_conf::loadProfile(location, &profile)) {
-            return profile.is_valid;
+            return profile.flags.isValid;
         }
     }
     return false;
@@ -301,7 +307,7 @@ bool isValid(int location) {
 bool setName(int location, const char *name, size_t name_len) {
     if (location > 0 && location < NUM_PROFILE_LOCATIONS) {
         Parameters profile;
-        if (persist_conf::loadProfile(location, &profile) && profile.is_valid) {
+        if (persist_conf::loadProfile(location, &profile) && profile.flags.isValid) {
             memset(profile.name, 0, sizeof(profile.name));
             strncpy(profile.name, name, name_len);
             return persist_conf::saveProfile(location, &profile);
@@ -313,7 +319,7 @@ bool setName(int location, const char *name, size_t name_len) {
 void getName(int location, char *name, int count) {
 	if (location >= 0 && location < NUM_PROFILE_LOCATIONS) {
         Parameters profile;
-        if (persist_conf::loadProfile(location, &profile) && profile.is_valid) {
+        if (persist_conf::loadProfile(location, &profile) && profile.flags.isValid) {
             strncpy(name, profile.name, count - 1);
 			name[count - 1] = 0;
             return;
