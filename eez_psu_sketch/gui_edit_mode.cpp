@@ -17,6 +17,7 @@
 */
 
 #include "psu.h"
+#include "channel_coupling.h"
 #include "gui_data_snapshot.h"
 #include "gui_edit_mode.h"
 #include "gui_edit_mode_slider.h"
@@ -216,7 +217,7 @@ void getInfoText(int part, char *infoText) {
             strcat_P(infoText, PSTR("["));
 		    util::strcatFloat(infoText, minValue.getFloat());
 		    strcat_P(infoText, PSTR("-"));
-		    util::strcatCurrent(infoText, Channel::get(dataCursor.i).getCurrentLimit());
+		    util::strcatCurrent(infoText, channel_coupling::getILimit(Channel::get(dataCursor.i)));
 		    strcat_P(infoText, PSTR("]"));
         }
     } else {
@@ -234,7 +235,7 @@ void getInfoText(int part, char *infoText) {
             strcat_P(infoText, PSTR("["));
             util::strcatFloat(infoText, minValue.getFloat());
 		    strcat_P(infoText, PSTR("-"));
-		    util::strcatVoltage(infoText, Channel::get(dataCursor.i).getVoltageLimit());
+		    util::strcatVoltage(infoText, channel_coupling::getULimit(Channel::get(dataCursor.i)));
 		    strcat_P(infoText, PSTR("]"));
         }
     }

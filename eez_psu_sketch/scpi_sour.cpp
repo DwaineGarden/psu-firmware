@@ -21,6 +21,7 @@
 #include "scpi_sour.h"
 
 #include "profile.h"
+#include "channel_coupling.h"
 
 #define I_STATE 1
 #define P_STATE 2
@@ -183,17 +184,17 @@ scpi_result_t scpi_source_Current(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-	if (current > channel->getCurrentLimit()) {
+	if (current > channel_coupling::getILimit(*channel)) {
         SCPI_ErrorPush(context, SCPI_ERROR_CURRENT_LIMIT_EXCEEDED);
         return SCPI_RES_ERR;
 	}
 
-    if (current * channel->u.set > channel->getPowerLimit()) {
+    if (current * channel_coupling::getUSet(*channel) > channel_coupling::getPowerLimit(*channel)) {
         SCPI_ErrorPush(context, SCPI_ERROR_POWER_LIMIT_EXCEEDED);
         return SCPI_RES_ERR;
     }
 
-    channel->setCurrent(current);
+    channel_coupling::setCurrent(*channel, current);
 
     return SCPI_RES_OK;
 }
@@ -204,7 +205,11 @@ scpi_result_t scpi_source_CurrentQ(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    return get_source_value(context, channel->i.set, channel->i.min, channel->i.max, channel->i.def);
+    return get_source_value(context, 
+        channel_coupling::getISet(*channel),
+        channel_coupling::getIMin(*channel),
+        channel_coupling::getIMax(*channel),
+        channel_coupling::getIDef(*channel));
 }
 
 scpi_result_t scpi_source_Voltage(scpi_t * context) {
@@ -227,17 +232,17 @@ scpi_result_t scpi_source_Voltage(scpi_t * context) {
         return SCPI_RES_ERR;
 	}
 
-	if (voltage > channel->getVoltageLimit()) {
+	if (voltage > channel_coupling::getULimit(*channel)) {
         SCPI_ErrorPush(context, SCPI_ERROR_VOLTAGE_LIMIT_EXCEEDED);
         return SCPI_RES_ERR;
 	}
 
-	if (voltage * channel->i.set > channel->getPowerLimit()) {
+	if (voltage * channel_coupling::getISet(*channel) > channel_coupling::getPowerLimit(*channel)) {
         SCPI_ErrorPush(context, SCPI_ERROR_POWER_LIMIT_EXCEEDED);
         return SCPI_RES_ERR;
     }
 
-    channel->setVoltage(voltage);
+    channel_coupling::setVoltage(*channel, voltage);
 
     return SCPI_RES_OK;
 }
@@ -252,10 +257,13 @@ scpi_result_t scpi_source_VoltageQ(scpi_t * context) {
 	if (channel->isRemoteProgrammingEnabled()) {
 		u = channel->u.mon_dac;
 	} else {
-		u = channel->u.set;
+		u = channel_coupling::getUSet(*channel);
 	}
 
-    return get_source_value(context, u, channel->u.min, channel->u.max, channel->u.def);
+    return get_source_value(context, u,
+        channel_coupling::getUMin(*channel),
+        channel_coupling::getUMax(*channel),
+        channel_coupling::getUDef(*channel));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -424,7 +432,7 @@ scpi_result_t scpi_source_VoltageProtectionLevel(scpi_t * context) {
 	}
 
     float voltage;
-    if (!get_voltage_protection_level_param(context, voltage, channel->u.set, channel->u.max, channel->u.max)) {
+    if (!get_voltage_protection_level_param(context, voltage, channel_coupling::getUSet(*channel), channel_coupling::getUMax(*channel), channel_coupling::getUMax(*channel))) {
         return SCPI_RES_ERR;
     }
 
@@ -441,7 +449,9 @@ scpi_result_t scpi_source_VoltageProtectionLevelQ(scpi_t * context) {
     }
     
     return get_source_value(context, channel->prot_conf.u_level,
-        channel->u.set, channel->u.max, channel->u.max);
+        channel_coupling::getUSet(*channel),
+        channel_coupling::getUMax(*channel),
+        channel_coupling::getUMax(*channel));
 }
 
 scpi_result_t scpi_source_VoltageProtectionDelay(scpi_t * context) {
@@ -652,7 +662,7 @@ scpi_result_t scpi_source_CurrentLimit(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    channel->setCurrentLimit(limit);
+    channel_coupling::setCurrentLimit(*channel, limit);
 
     return SCPI_RES_OK;
 }
@@ -663,7 +673,11 @@ scpi_result_t scpi_source_CurrentLimitQ(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    return get_source_value(context, channel->getCurrentLimit(), 0, channel->getMaxCurrentLimit(), channel->getMaxCurrentLimit());
+    return get_source_value(context,
+        channel_coupling::getILimit(*channel),
+        0,
+        channel_coupling::getIMaxLimit(*channel),
+        channel_coupling::getIMaxLimit(*channel));
 }
 
 scpi_result_t scpi_source_VoltageLimit(scpi_t * context) {
@@ -677,7 +691,7 @@ scpi_result_t scpi_source_VoltageLimit(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    channel->setVoltageLimit(limit);
+    channel_coupling::setVoltageLimit(*channel, limit);
 
     return SCPI_RES_OK;
 }
@@ -688,7 +702,11 @@ scpi_result_t scpi_source_VoltageLimitQ(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    return get_source_value(context, channel->getVoltageLimit(), 0, channel->getVoltageMaxLimit(), channel->getVoltageMaxLimit());
+    return get_source_value(context,
+        channel_coupling::getULimit(*channel),
+        0,
+        channel_coupling::getUMaxLimit(*channel),
+        channel_coupling::getUMaxLimit(*channel));
 }
 
 scpi_result_t scpi_source_PowerLimit(scpi_t * context) {
@@ -702,7 +720,7 @@ scpi_result_t scpi_source_PowerLimit(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    channel->setPowerLimit(limit);
+    channel_coupling::setPowerLimit(*channel, limit);
 
     return SCPI_RES_OK;
 }

@@ -29,6 +29,7 @@
 #include "sound.h"
 #include "temperature.h"
 #include "event_queue.h"
+#include "channel_coupling.h"
 
 namespace eez {
 namespace psu {
@@ -273,7 +274,7 @@ void TempSensorTemperature::protection_enter() {
     otp_tripped = true;
 
 	if (temp_sensor::sensors[sensorIndex].ch_num >= 0) {
-		Channel::get(temp_sensor::sensors[sensorIndex].ch_num).outputEnable(false);
+		channel_coupling::outputEnable(Channel::get(temp_sensor::sensors[sensorIndex].ch_num), false);
 	} else {
 		for (int i = 0; i < CH_NUM; ++i) {
 			Channel::get(i).outputEnable(false);

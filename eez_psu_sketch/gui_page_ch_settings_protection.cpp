@@ -20,6 +20,7 @@
 
 #include "profile.h"
 #include "temperature.h"
+#include "channel_coupling.h"
 
 #include "gui_data_snapshot.h"
 #include "gui_page_ch_settings_protection.h"
@@ -232,14 +233,14 @@ ChSettingsOvpProtectionPage::ChSettingsOvpProtectionPage() {
 	origState = state = g_channel->prot_conf.flags.u_state ? 1 : 0;
 
 	origLimit = limit = data::Value(g_channel->u.limit, data::VALUE_TYPE_FLOAT_VOLT);
-	minLimit = g_channel->u.min;
-	maxLimit = g_channel->u.max;
-	defLimit = g_channel->u.max;
+	minLimit = channel_coupling::getUMin(*g_channel);
+	maxLimit = channel_coupling::getUMax(*g_channel);
+	defLimit = channel_coupling::getUMax(*g_channel);
 
 	origLevel = level = data::Value(g_channel->prot_conf.u_level, data::VALUE_TYPE_FLOAT_VOLT);
-	minLevel = g_channel->u.set;
-	maxLevel = g_channel->u.max;
-	defLevel = g_channel->u.max;
+	minLevel = channel_coupling::getUSet(*g_channel);
+	maxLevel = channel_coupling::getUMax(*g_channel);
+	defLevel = channel_coupling::getUMax(*g_channel);
 
 	origDelay = delay = data::Value(g_channel->prot_conf.u_delay, data::VALUE_TYPE_FLOAT_SECOND);
 	minDelay = g_channel->OVP_MIN_DELAY;
@@ -252,10 +253,10 @@ void ChSettingsOvpProtectionPage::onSetParamsOk() {
 }
 
 void ChSettingsOvpProtectionPage::setParams(bool checkLoad) {
-	if (checkLoad && g_channel->isOutputEnabled() && limit.getFloat() < g_channel->u.mon && util::greaterOrEqual(g_channel->i.mon, 0, CHANNEL_VALUE_PRECISION)) {
+	if (checkLoad && g_channel->isOutputEnabled() && limit.getFloat() < channel_coupling::getUMon(*g_channel) && util::greaterOrEqual(channel_coupling::getIMon(*g_channel), 0, CHANNEL_VALUE_PRECISION)) {
 		areYouSureWithMessage(PSTR("This change will affect current load."), onSetParamsOk);
 	} else {
-		g_channel->setVoltageLimit(limit.getFloat());
+		channel_coupling::setVoltageLimit(*g_channel, limit.getFloat());
 		g_channel->prot_conf.flags.u_state = state;
 		g_channel->prot_conf.u_level = level.getFloat();
 		g_channel->prot_conf.u_delay = delay.getFloat();
@@ -269,8 +270,8 @@ ChSettingsOcpProtectionPage::ChSettingsOcpProtectionPage() {
 	origState = state = g_channel->prot_conf.flags.i_state ? 1 : 0;
 
 	origLimit = limit = data::Value(g_channel->i.limit, data::VALUE_TYPE_FLOAT_AMPER);
-	minLimit = g_channel->i.min;
-	maxLimit = g_channel->getMaxCurrentLimit();
+	minLimit = channel_coupling::getIMin(*g_channel);
+	maxLimit = channel_coupling::getIMaxLimit(*g_channel);
 	defLimit = maxLimit;
 
 	origLevel = level = 0;
@@ -286,10 +287,10 @@ void ChSettingsOcpProtectionPage::onSetParamsOk() {
 }
 
 void ChSettingsOcpProtectionPage::setParams(bool checkLoad) {
-	if (checkLoad && g_channel->isOutputEnabled() && limit.getFloat() < g_channel->i.mon) {
+	if (checkLoad && g_channel->isOutputEnabled() && limit.getFloat() < channel_coupling::getIMon(*g_channel)) {
 		areYouSureWithMessage(PSTR("This change will affect current load."), onSetParamsOk);
 	} else {
-		g_channel->setCurrentLimit(limit.getFloat());
+		channel_coupling::setCurrentLimit(*g_channel, limit.getFloat());
 		g_channel->prot_conf.flags.i_state = state;
 		g_channel->prot_conf.i_delay = delay.getFloat();
 		onSetFinish(checkLoad);
@@ -323,14 +324,14 @@ void ChSettingsOppProtectionPage::onSetParamsOk() {
 
 void ChSettingsOppProtectionPage::setParams(bool checkLoad) {
 	if (checkLoad && g_channel->isOutputEnabled()) {
-		float pMon = g_channel->u.mon * g_channel->i.mon;
-		if (limit.getFloat() < pMon && util::greaterOrEqual(g_channel->i.mon, 0, CHANNEL_VALUE_PRECISION)) {
+		float pMon = channel_coupling::getUMon(*g_channel) * channel_coupling::getIMon(*g_channel);
+		if (limit.getFloat() < pMon && util::greaterOrEqual(channel_coupling::getIMon(*g_channel), 0, CHANNEL_VALUE_PRECISION)) {
 			areYouSureWithMessage(PSTR("This change will affect current load."), onSetParamsOk);
 			return;
 		}
 	}
 
-	g_channel->setPowerLimit(limit.getFloat());
+	channel_coupling::setPowerLimit(*g_channel, limit.getFloat());
 	g_channel->prot_conf.flags.p_state = state;
 	g_channel->prot_conf.p_level = level.getFloat();
 	g_channel->prot_conf.p_delay = delay.getFloat();

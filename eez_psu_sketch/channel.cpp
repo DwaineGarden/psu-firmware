@@ -34,6 +34,7 @@
 #include "sound.h"
 #include "profile.h"
 #include "event_queue.h"
+#include "channel_coupling.h"
 
 namespace eez {
 namespace psu {
@@ -281,7 +282,7 @@ Channel::Channel(
 }
 
 void Channel::protectionEnter(ProtectionValue &cpv) {
-    outputEnable(false);
+    channel_coupling::outputEnable(*this, false);
 
     cpv.flags.tripped = 1;
 
@@ -754,7 +755,7 @@ void Channel::event(uint8_t gpio, int16_t adc_data) {
 		}
 
 		if (rpol && isOutputEnabled()) {
-			outputEnable(false);
+			channel_coupling::outputEnable(*this, false);
 			event_queue::pushEvent(event_queue::EVENT_ERROR_CH1_REMOTE_SENSE_REVERSE_POLARITY_DETECTED + index - 1);
 			return;
 		}

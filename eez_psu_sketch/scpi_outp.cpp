@@ -21,6 +21,7 @@
 #include "scpi_outp.h"
 
 #include "calibration.h"
+#include "channel_coupling.h"
 
 namespace eez {
 namespace psu {
@@ -74,7 +75,7 @@ scpi_result_t scpi_outp_State(scpi_t * context) {
             }
         }
 
-        channel->outputEnable(enable);
+        channel_coupling::outputEnable(*channel, enable);
     }
 
     return SCPI_RES_OK;

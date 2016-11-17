@@ -23,6 +23,7 @@
 #include "datetime.h"
 #include "sound.h"
 #include "profile.h"
+#include "channel_coupling.h"
 
 namespace eez {
 namespace psu {
@@ -310,7 +311,7 @@ scpi_result_t scpi_syst_ChannelInformationCurrentQ(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    SCPI_ResultFloat(context, channel->i.max);
+    SCPI_ResultFloat(context, channel_coupling::getIMax(*channel));
 
     return SCPI_RES_OK;
 }
@@ -393,7 +394,7 @@ scpi_result_t scpi_syst_ChannelInformationVoltageQ(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    SCPI_ResultFloat(context, channel->u.max);
+    SCPI_ResultFloat(context, channel_coupling::getUMax(*channel));
 
     return SCPI_RES_OK;
 }

@@ -20,6 +20,7 @@
 #include "calibration.h"
 #include "scpi_psu.h"
 #include "datetime.h"
+#include "channel_coupling.h"
 
 namespace eez {
 namespace psu {
@@ -182,6 +183,8 @@ void start(Channel *channel_) {
 
     g_current.reset();
     g_voltage.reset();
+
+    channel_coupling::setType(channel_coupling::TYPE_NONE);
 
     g_channel->calibrationEnable(false);
     resetChannelToZero();
