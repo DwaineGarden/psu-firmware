@@ -133,11 +133,11 @@ void switchChannelCoupling(int channelCouplingType) {
     g_channelCouplingType = channelCouplingType;
 
     if (g_channelCouplingType == CHANNELS_COUPLING_TYPE_PARALLEL) {
-        bp_switch2(BP_K_PAR, BP_K_SER);
+        bp_switch2(1 << BP_K_PAR, 1 << BP_K_SER);
     } else if (g_channelCouplingType == CHANNELS_COUPLING_TYPE_SERIES) {
-        bp_switch2(BP_K_SER, BP_K_PAR);
+        bp_switch2(1 << BP_K_SER, 1 << BP_K_PAR);
     } else {
-        bp_switch2(0, BP_K_SER | BP_K_PAR);
+        bp_switch2(0, (1 << BP_K_SER) | (1 << BP_K_PAR));
     }
 }
 
