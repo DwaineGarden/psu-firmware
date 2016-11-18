@@ -798,16 +798,13 @@ void Channel::doDpEnable(bool enable) {
     }
 }
 
-extern int g_trt;
-
 void Channel::doOutputEnable(bool enable) {
     if (enable && !isOk()) {
         return;
     }
 
-	noInterrupts();
-
-	ioexp.disableWrite();
+	//noInterrupts();
+	//ioexp.disableWrite();
 
 	flags.outputEnabled = enable;
 	ioexp.changeBit(IOExpander::IO_BIT_OUT_OUTPUT_ENABLE, enable);
@@ -841,8 +838,8 @@ void Channel::doOutputEnable(bool enable) {
         delayed_dp_off_start = micros();
 	}
 
-	interrupts();
-	ioexp.enableWriteAndFlush();
+	//interrupts();
+	//ioexp.enableWriteAndFlush();
 
 	if (enable) {
 		// start ADC conversion
@@ -852,7 +849,6 @@ void Channel::doOutputEnable(bool enable) {
 	} else {
 		onTimeCounter.stop();
 	}
-
 }
 
 void Channel::doRemoteSensingEnable(bool enable) {
