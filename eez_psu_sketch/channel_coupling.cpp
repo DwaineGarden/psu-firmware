@@ -215,7 +215,7 @@ float getPowerLimit(const Channel& channel) {
     if (g_channelCoupling != TYPE_NONE) {
         return 2 * min(Channel::get(0).getPowerLimit(), Channel::get(1).getPowerLimit());
     }
-    return channel.getCurrentLimit();
+    return channel.getPowerLimit();
 }
 
 void setPowerLimit(Channel &channel, float limit) {

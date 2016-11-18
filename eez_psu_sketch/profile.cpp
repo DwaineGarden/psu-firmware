@@ -107,10 +107,10 @@ bool recallFromProfile(Parameters *profile) {
 		memcpy(&temperature::sensors[i].prot_conf, profile->temp_prot + i, sizeof(temperature::ProtectionConfiguration));
 	}
 
-    channel_coupling::setType((channel_coupling::Type)profile->flags.channelsCoupling);
-
     if (profile->flags.powerIsUp) result &= psu::powerUp();
     else psu::powerDown();
+
+    channel_coupling::setType((channel_coupling::Type)profile->flags.channelsCoupling);
 
     recallChannelsFromProfile(profile);
 

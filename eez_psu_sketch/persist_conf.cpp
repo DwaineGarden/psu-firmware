@@ -273,6 +273,11 @@ bool setProfileAutoRecallLocation(int location) {
     dev_conf.profile_auto_recall_location = (int8_t)location;
     if (saveDevice()) {
 		event_queue::pushEvent(event_queue::EVENT_INFO_DEFAULE_PROFILE_CHANGED_TO_0 + location);
+
+        if (location == 0) {
+            profile::save();
+        }
+
 		return true;
 	}
     return false;

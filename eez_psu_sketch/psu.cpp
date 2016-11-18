@@ -49,6 +49,7 @@
 #endif
 
 #include "event_queue.h"
+#include "channel_coupling.h"
 
 namespace eez {
 namespace psu {
@@ -461,6 +462,9 @@ static bool psu_reset(bool power_on) {
 
     // CAL[:MODE] OFF
     calibration::stop();
+
+    //
+    channel_coupling::setType(channel_coupling::TYPE_NONE);
 
     // SYST:POW ON
     if (powerUp()) {
