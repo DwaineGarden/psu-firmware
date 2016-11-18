@@ -330,6 +330,8 @@ void powerDown() {
 
     if (!g_power_is_up) return;
 
+    channel_coupling::setType(channel_coupling::TYPE_NONE);
+
     for (int i = 0; i < CH_NUM; ++i) {
         Channel::get(i).onPowerDown();
     }
