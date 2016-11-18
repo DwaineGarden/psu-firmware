@@ -44,6 +44,8 @@ void tick(unsigned long tick_usec) {
 void recallChannelsFromProfile(Parameters *profile) {
     bool last_save_enabled = enableSave(false);
 
+    channel_coupling::setType((channel_coupling::Type)profile->flags.channelsCoupling);
+
     for (int i = 0; i < CH_MAX; ++i) {
 		Channel &channel = Channel::get(i);
 
@@ -109,8 +111,6 @@ bool recallFromProfile(Parameters *profile) {
 
     if (profile->flags.powerIsUp) result &= psu::powerUp();
     else psu::powerDown();
-
-    channel_coupling::setType((channel_coupling::Type)profile->flags.channelsCoupling);
 
     recallChannelsFromProfile(profile);
 
