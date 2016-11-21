@@ -585,13 +585,8 @@ scpi_result_t scpi_source_LRipple(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    if (!(channel->getFeatures() & CH_FEATURE_LRIPPLE)) {
+    if (!channel_coupling::isLowRippleAllowed(*channel)) {
         SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
-        return SCPI_RES_ERR;
-    }
-
-    if (channel_coupling::getType() != channel_coupling::TYPE_NONE) {
-        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
         return SCPI_RES_ERR;
     }
 
@@ -600,7 +595,7 @@ scpi_result_t scpi_source_LRipple(scpi_t * context) {
 		return SCPI_RES_ERR;
 	}
 
-    if (!channel->lowRippleEnable(enable)) {
+    if (!channel_coupling::lowRippleEnable(*channel, enable)) {
         SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
         return SCPI_RES_ERR;
     }

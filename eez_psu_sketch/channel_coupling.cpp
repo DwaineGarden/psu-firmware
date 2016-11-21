@@ -37,7 +37,12 @@ void setType(Type value) {
         for (int i = 0; i < 2; ++i) {
     		Channel &channel = Channel::get(i);
             channel.outputEnable(false);
-            channel.remoteProgrammingEnable(false);
+            if (channel.getFeatures() & CH_FEATURE_RPROG) {
+                channel.remoteProgrammingEnable(false);
+            }
+            if (channel.getFeatures() & CH_FEATURE_LRIPPLE) {
+                channel.lowRippleEnable(false);
+            }
 
             channel.setVoltage(getUMin(channel));
             channel.setCurrent(getIMin(channel));
@@ -249,6 +254,31 @@ void outputEnable(Channel& channel, bool enable) {
     if (g_channelCoupling != TYPE_NONE) {
         Channel::get(0).outputEnable(enable);
         Channel::get(1).outputEnable(enable);
+    } else {
+        channel.outputEnable(enable);
+    }
+}
+
+bool isLowRippleAllowed(Channel& channel) {
+    if (g_channelCoupling != TYPE_NONE) {
+        return (Channel::get(0).getFeatures() & CH_FEATURE_LRIPPLE) && (Channel::get(1).getFeatures() & CH_FEATURE_LRIPPLE);
+    } else {
+        return (channel.getFeatures() & CH_FEATURE_LRIPPLE) ? true : false;
+    }
+}
+
+bool lowRippleEnable(Channel& channel, bool enable) {
+    if (g_channelCoupling != TYPE_NONE) {
+        return Channel::get(0).lowRippleEnable(enable) && Channel::get(1).lowRippleEnable(enable);
+    } else {
+        return channel.lowRippleEnable(enable);
+    }
+}
+
+void lowRippleAutoEnable(Channel& channel, bool enable) {
+    if (g_channelCoupling != TYPE_NONE) {
+        Channel::get(0).lowRippleAutoEnable(enable);
+        Channel::get(1).lowRippleAutoEnable(enable);
     } else {
         channel.outputEnable(enable);
     }

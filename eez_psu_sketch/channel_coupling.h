@@ -66,6 +66,9 @@ float getPowerDefaultLimit(const Channel& channel);
 void setPowerLimit(Channel &channel, float limit);
 
 void outputEnable(Channel& channel, bool enable);
+bool isLowRippleAllowed(Channel& channel);
+bool lowRippleEnable(Channel& channel, bool enable);
+void lowRippleAutoEnable(Channel& channel, bool enable);
 
 }
 }

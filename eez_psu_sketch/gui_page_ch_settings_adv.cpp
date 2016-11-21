@@ -19,6 +19,7 @@
 #include "psu.h"
 
 #include "profile.h"
+#include "channel_coupling.h"
 
 #include "gui_data_snapshot.h"
 #include "gui_page_ch_settings_adv.h"
@@ -90,12 +91,12 @@ int ChSettingsAdvLRipplePage::getDirty() {
 
 void ChSettingsAdvLRipplePage::set() {
 	if (getDirty()) {
-		if (!g_channel->lowRippleEnable(status ? true : false)) {
+		if (!channel_coupling::lowRippleEnable(*g_channel, status ? true : false)) {
 			errorMessageP(PSTR("Failed to change LRipple status!"));
 			return;
 		}
 	
-		g_channel->lowRippleAutoEnable(autoMode ? true : false);
+		channel_coupling::lowRippleAutoEnable(*g_channel, autoMode ? true : false);
 
 		profile::save();
 	
