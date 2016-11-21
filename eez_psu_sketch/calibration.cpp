@@ -184,8 +184,6 @@ void start(Channel *channel_) {
     g_current.reset();
     g_voltage.reset();
 
-    channel_coupling::setType(channel_coupling::TYPE_NONE);
-
     g_channel->calibrationEnable(false);
     resetChannelToZero();
 

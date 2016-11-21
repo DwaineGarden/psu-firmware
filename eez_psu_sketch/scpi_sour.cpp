@@ -548,6 +548,11 @@ scpi_result_t scpi_source_VoltageProgramSource(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
+    if (channel_coupling::getType() != channel_coupling::TYPE_NONE) {
+        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
+        return SCPI_RES_ERR;
+    }
+
     int32_t choice;
     if (!SCPI_ParamChoice(context, internal_external_choice, &choice, TRUE)) {
         return SCPI_RES_ERR;
@@ -582,6 +587,11 @@ scpi_result_t scpi_source_LRipple(scpi_t * context) {
 
     if (!(channel->getFeatures() & CH_FEATURE_LRIPPLE)) {
         SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        return SCPI_RES_ERR;
+    }
+
+    if (channel_coupling::getType() != channel_coupling::TYPE_NONE) {
+        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
         return SCPI_RES_ERR;
     }
 

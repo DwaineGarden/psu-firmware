@@ -21,6 +21,7 @@
 #include "scpi_cal.h"
 
 #include "calibration.h"
+#include "channel_coupling.h"
 
 namespace eez {
 namespace psu {
@@ -152,6 +153,11 @@ scpi_result_t scpi_cal_Mode(scpi_t * context) {
 
     if (!channel->isOutputEnabled()) {
         SCPI_ErrorPush(context, SCPI_ERROR_BAD_SEQUENCE_OF_CALIBRATION_COMMANDS);
+        return SCPI_RES_ERR;
+    }
+
+    if (channel_coupling::getType() != channel_coupling::TYPE_NONE) {
+        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
         return SCPI_RES_ERR;
     }
 
