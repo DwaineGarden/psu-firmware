@@ -817,9 +817,11 @@ void Channel::doOutputEnable(bool enable) {
 			delayLowRippleCheck = true;
 		}
 
-		// enable DP
-        delayed_dp_off = false;
-		doDpEnable(true);
+        if (channel_coupling::getType() == channel_coupling::TYPE_NONE || index == 1) {
+    		// enable DP
+            delayed_dp_off = false;
+		    doDpEnable(true);
+        }
 	} else {
 		if (getFeatures() & CH_FEATURE_LRIPPLE) {
 			doLowRippleEnable(false);
@@ -833,9 +835,15 @@ void Channel::doOutputEnable(bool enable) {
             calibration::stop();
         }
 
-		// disable (delayed) DP
-        delayed_dp_off = true;
-        delayed_dp_off_start = micros();
+		// disable DP
+        if (channel_coupling::getType() == channel_coupling::TYPE_NONE) {
+            // delayed
+            delayed_dp_off = true;
+            delayed_dp_off_start = micros();
+        } else {
+            // channel is coupled, disable DP immediatelly
+            doDpEnable(false);
+        }
 	}
 
 	//interrupts();
