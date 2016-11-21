@@ -60,6 +60,9 @@ void setCurrent(Channel &channel, float current);
 void setCurrentLimit(Channel &channel, float limit);
 
 float getPowerLimit(const Channel& channel);
+float getPowerMinLimit(const Channel& channel);
+float getPowerMaxLimit(const Channel& channel);
+float getPowerDefaultLimit(const Channel& channel);
 void setPowerLimit(Channel &channel, float limit);
 
 void outputEnable(Channel& channel, bool enable);

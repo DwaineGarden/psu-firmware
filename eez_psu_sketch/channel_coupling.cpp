@@ -218,6 +218,27 @@ float getPowerLimit(const Channel& channel) {
     return channel.getPowerLimit();
 }
 
+float getPowerMinLimit(const Channel& channel) {
+    if (g_channelCoupling != TYPE_NONE) {
+        return 2 * max(Channel::get(0).OPP_MIN_LEVEL, Channel::get(1).OPP_MIN_LEVEL);
+    }
+    return channel.OPP_MIN_LEVEL;
+}
+
+float getPowerMaxLimit(const Channel& channel) {
+    if (g_channelCoupling != TYPE_NONE) {
+        return 2 * min(Channel::get(0).OPP_MAX_LEVEL, Channel::get(1).OPP_MAX_LEVEL);
+    }
+    return channel.OPP_MAX_LEVEL;
+}
+
+float getPowerDefaultLimit(const Channel& channel) {
+    if (g_channelCoupling != TYPE_NONE) {
+        return Channel::get(0).OPP_DEFAULT_LEVEL + Channel::get(1).OPP_DEFAULT_LEVEL;
+    }
+    return channel.OPP_DEFAULT_LEVEL;
+}
+
 void setPowerLimit(Channel &channel, float limit) {
     if (g_channelCoupling != TYPE_NONE) {
         Channel::get(0).setPowerLimit(limit / 2);

@@ -232,7 +232,7 @@ void ChSettingsProtectionSetPage::editDelay() {
 ChSettingsOvpProtectionPage::ChSettingsOvpProtectionPage() {
 	origState = state = g_channel->prot_conf.flags.u_state ? 1 : 0;
 
-	origLimit = limit = data::Value(g_channel->u.limit, data::VALUE_TYPE_FLOAT_VOLT);
+	origLimit = limit = data::Value(channel_coupling::getULimit(*g_channel), data::VALUE_TYPE_FLOAT_VOLT);
 	minLimit = channel_coupling::getUMin(*g_channel);
 	maxLimit = channel_coupling::getUMax(*g_channel);
 	defLimit = channel_coupling::getUMax(*g_channel);
@@ -269,7 +269,7 @@ void ChSettingsOvpProtectionPage::setParams(bool checkLoad) {
 ChSettingsOcpProtectionPage::ChSettingsOcpProtectionPage() {
 	origState = state = g_channel->prot_conf.flags.i_state ? 1 : 0;
 
-	origLimit = limit = data::Value(g_channel->i.limit, data::VALUE_TYPE_FLOAT_AMPER);
+	origLimit = limit = data::Value(channel_coupling::getILimit(*g_channel), data::VALUE_TYPE_FLOAT_SECOND);
 	minLimit = channel_coupling::getIMin(*g_channel);
 	maxLimit = channel_coupling::getIMaxLimit(*g_channel);
 	defLimit = maxLimit;
@@ -302,15 +302,15 @@ void ChSettingsOcpProtectionPage::setParams(bool checkLoad) {
 ChSettingsOppProtectionPage::ChSettingsOppProtectionPage() {
 	origState = state = g_channel->prot_conf.flags.p_state ? 1 : 0;
 
-	origLimit = limit = data::Value(g_channel->p_limit, data::VALUE_TYPE_FLOAT_WATT);
-	minLimit = g_channel->OPP_MIN_LEVEL;
-	maxLimit = g_channel->OPP_MAX_LEVEL;
-	defLimit = g_channel->OPP_DEFAULT_LEVEL;
+	origLimit = limit = data::Value(channel_coupling::getPowerLimit(*g_channel), data::VALUE_TYPE_FLOAT_WATT);
+	minLimit = channel_coupling::getPowerMinLimit(*g_channel);
+	maxLimit = channel_coupling::getPowerMaxLimit(*g_channel);
+	defLimit = channel_coupling::getPowerDefaultLimit(*g_channel);
 
 	origLevel = level = data::Value(g_channel->prot_conf.p_level, data::VALUE_TYPE_FLOAT_WATT);
-	minLevel = g_channel->OPP_MIN_LEVEL;
-	maxLevel = g_channel->OPP_MAX_LEVEL;
-	defLevel = g_channel->OPP_DEFAULT_LEVEL;
+	minLevel = channel_coupling::getPowerMinLimit(*g_channel);
+	maxLevel = channel_coupling::getPowerMaxLimit(*g_channel);
+	defLevel = channel_coupling::getPowerDefaultLimit(*g_channel);
 
 	origDelay = delay = data::Value(g_channel->prot_conf.p_delay, data::VALUE_TYPE_FLOAT_SECOND);
 	minDelay = g_channel->OPP_MIN_DELAY;
