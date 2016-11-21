@@ -731,7 +731,11 @@ scpi_result_t scpi_source_PowerLimitQ(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    return get_source_value(context, channel->getPowerLimit(), 0, channel->getPowerMaxLimit(), channel->getPowerMaxLimit());
+    return get_source_value(context,
+        channel_coupling::getPowerLimit(*channel),
+        channel_coupling::getPowerMinLimit(*channel),
+        channel_coupling::getPowerMaxLimit(*channel),
+        channel_coupling::getPowerDefaultLimit(*channel));
 }
 
 }

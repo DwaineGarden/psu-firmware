@@ -308,9 +308,9 @@ ChSettingsOppProtectionPage::ChSettingsOppProtectionPage() {
 	defLimit = channel_coupling::getPowerDefaultLimit(*g_channel);
 
 	origLevel = level = data::Value(g_channel->prot_conf.p_level, data::VALUE_TYPE_FLOAT_WATT);
-	minLevel = channel_coupling::getPowerMinLimit(*g_channel);
-	maxLevel = channel_coupling::getPowerMaxLimit(*g_channel);
-	defLevel = channel_coupling::getPowerDefaultLimit(*g_channel);
+	minLevel = g_channel->OPP_MIN_LEVEL;
+	maxLevel = g_channel->OPP_MAX_LEVEL;
+	defLevel = g_channel->OPP_DEFAULT_LEVEL;
 
 	origDelay = delay = data::Value(g_channel->prot_conf.p_delay, data::VALUE_TYPE_FLOAT_SECOND);
 	minDelay = g_channel->OPP_MIN_DELAY;
