@@ -146,15 +146,42 @@ void setVoltageLimit(Channel &channel, float limit) {
 void setOvpParameters(Channel &channel, int state, float level, float delay) {
     if (g_channelCoupling != TYPE_NONE) {
 	    Channel::get(0).prot_conf.flags.u_state = state;
-	    Channel::get(0).prot_conf.u_level = level;
+	    Channel::get(0).prot_conf.u_level = level / 2;
 	    Channel::get(0).prot_conf.u_delay = delay;
 
         Channel::get(1).prot_conf.flags.u_state = state;
-	    Channel::get(1).prot_conf.u_level = level;
+	    Channel::get(1).prot_conf.u_level = level / 2;
 	    Channel::get(1).prot_conf.u_delay = delay;
     } else {
 	    channel.prot_conf.flags.u_state = state;
 	    channel.prot_conf.u_level = level;
+	    channel.prot_conf.u_delay = delay;
+    }
+}
+
+void setOvpState(Channel &channel, int state) {
+    if (g_channelCoupling != TYPE_NONE) {
+	    Channel::get(0).prot_conf.flags.u_state = state;
+        Channel::get(1).prot_conf.flags.u_state = state;
+    } else {
+	    channel.prot_conf.flags.u_state = state;
+    }
+}
+
+void setOvpLevel(Channel &channel, float level) {
+    if (g_channelCoupling != TYPE_NONE) {
+	    Channel::get(0).prot_conf.u_level = level / 2;
+	    Channel::get(1).prot_conf.u_level = level / 2;
+    } else {
+	    channel.prot_conf.u_level = level;
+    }
+}
+
+void setOvpDelay(Channel &channel, float delay) {
+    if (g_channelCoupling != TYPE_NONE) {
+	    Channel::get(0).prot_conf.u_delay = delay;
+	    Channel::get(1).prot_conf.u_delay = delay;
+    } else {
 	    channel.prot_conf.u_delay = delay;
     }
 }
@@ -252,6 +279,24 @@ void setOcpParameters(Channel &channel, int state, float delay) {
     }
 }
 
+void setOcpState(Channel &channel, int state) {
+    if (g_channelCoupling != TYPE_NONE) {
+	    Channel::get(0).prot_conf.flags.i_state = state;
+        Channel::get(1).prot_conf.flags.i_state = state;
+    } else {
+	    channel.prot_conf.flags.i_state = state;
+    }
+}
+
+void setOcpDelay(Channel &channel, float delay) {
+    if (g_channelCoupling != TYPE_NONE) {
+	    Channel::get(0).prot_conf.i_delay = delay;
+	    Channel::get(1).prot_conf.i_delay = delay;
+    } else {
+	    channel.prot_conf.i_delay = delay;
+    }
+}
+
 float getPowerLimit(const Channel& channel) {
     if (g_channelCoupling != TYPE_NONE) {
         return 2 * min(Channel::get(0).getPowerLimit(), Channel::get(1).getPowerLimit());
@@ -317,15 +362,42 @@ float getOppDefaultLevel(Channel &channel) {
 void setOppParameters(Channel &channel, int state, float level, float delay) {
     if (g_channelCoupling != TYPE_NONE) {
 	    Channel::get(0).prot_conf.flags.p_state = state;
-	    Channel::get(0).prot_conf.p_level = level;
+	    Channel::get(0).prot_conf.p_level = level / 2;
 	    Channel::get(0).prot_conf.p_delay = delay;
 
         Channel::get(1).prot_conf.flags.p_state = state;
-	    Channel::get(1).prot_conf.p_level = level;
+	    Channel::get(1).prot_conf.p_level = level / 2;
 	    Channel::get(1).prot_conf.p_delay = delay;
     } else {
 	    channel.prot_conf.flags.p_state = state;
 	    channel.prot_conf.p_level = level;
+	    channel.prot_conf.p_delay = delay;
+    }
+}
+
+void setOppState(Channel &channel, int state) {
+    if (g_channelCoupling != TYPE_NONE) {
+	    Channel::get(0).prot_conf.flags.p_state = state;
+        Channel::get(1).prot_conf.flags.p_state = state;
+    } else {
+	    channel.prot_conf.flags.p_state = state;
+    }
+}
+
+void setOppLevel(Channel &channel, float level) {
+    if (g_channelCoupling != TYPE_NONE) {
+	    Channel::get(0).prot_conf.p_level = level / 2;
+	    Channel::get(1).prot_conf.p_level = level / 2;
+    } else {
+	    channel.prot_conf.p_level = level;
+    }
+}
+
+void setOppDelay(Channel &channel, float delay) {
+    if (g_channelCoupling != TYPE_NONE) {
+	    Channel::get(0).prot_conf.p_delay = delay;
+	    Channel::get(1).prot_conf.p_delay = delay;
+    } else {
 	    channel.prot_conf.p_delay = delay;
     }
 }
