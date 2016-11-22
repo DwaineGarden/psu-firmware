@@ -33,14 +33,14 @@ namespace gui {
 ////////////////////////////////////////////////////////////////////////////////
 
 void ChSettingsProtectionPage::clear() {
-	channel_coupling::clearProtection();
+	channel_coupling::clearProtection(*g_channel);
 
 	infoMessageP(PSTR("Cleared!"), actions[ACTION_ID_SHOW_CH_SETTINGS_PROT]);
 }
 
 void onClearAndDisableYes() {
-	channel_coupling::clearProtection();
-	channel_coupling::disableProtection();
+	channel_coupling::clearProtection(*g_channel);
+	channel_coupling::disableProtection(*g_channel);
 	profile::save();
 
 	infoMessageP(PSTR("Cleared and disabled!"), actions[ACTION_ID_SHOW_CH_SETTINGS_PROT]);
