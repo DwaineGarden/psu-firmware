@@ -112,6 +112,13 @@ float getUMax(const Channel &channel) {
     return channel.u.max;
 }
 
+float getUProtectionLevel(const Channel &channel) {
+    if (g_channelCoupling == TYPE_SERIES) {
+        return Channel::get(0).prot_conf.u_level + Channel::get(1).prot_conf.u_level;
+    }
+    return channel.prot_conf.u_level;
+}
+
 void setVoltage(Channel &channel, float voltage) {
     if (g_channelCoupling == TYPE_SERIES) {
         Channel::get(0).setVoltage(voltage / 2);
@@ -133,6 +140,22 @@ void setVoltageLimit(Channel &channel, float limit) {
         Channel::get(1).setVoltageLimit(limit);
     } else {
         channel.setVoltageLimit(limit);
+    }
+}
+
+void setOvpParameters(Channel &channel, int state, float level, float delay) {
+    if (g_channelCoupling != TYPE_NONE) {
+	    Channel::get(0).prot_conf.flags.u_state = state;
+	    Channel::get(0).prot_conf.u_level = level;
+	    Channel::get(0).prot_conf.u_delay = delay;
+
+        Channel::get(1).prot_conf.flags.u_state = state;
+	    Channel::get(1).prot_conf.u_level = level;
+	    Channel::get(1).prot_conf.u_delay = delay;
+    } else {
+	    channel.prot_conf.flags.u_state = state;
+	    channel.prot_conf.u_level = level;
+	    channel.prot_conf.u_delay = delay;
     }
 }
 
@@ -216,6 +239,19 @@ void setCurrentLimit(Channel &channel, float limit) {
     }
 }
 
+void setOcpParameters(Channel &channel, int state, float delay) {
+    if (g_channelCoupling != TYPE_NONE) {
+	    Channel::get(0).prot_conf.flags.i_state = state;
+	    Channel::get(0).prot_conf.i_delay = delay;
+
+        Channel::get(1).prot_conf.flags.i_state = state;
+	    Channel::get(1).prot_conf.i_delay = delay;
+    } else {
+	    channel.prot_conf.flags.i_state = state;
+	    channel.prot_conf.i_delay = delay;
+    }
+}
+
 float getPowerLimit(const Channel& channel) {
     if (g_channelCoupling != TYPE_NONE) {
         return 2 * min(Channel::get(0).getPowerLimit(), Channel::get(1).getPowerLimit());
@@ -241,12 +277,56 @@ float getPowerDefaultLimit(const Channel& channel) {
     return getPowerMaxLimit(channel);
 }
 
+float getPowerProtectionLevel(const Channel &channel) {
+    if (g_channelCoupling != TYPE_NONE) {
+        return Channel::get(0).prot_conf.p_level + Channel::get(1).prot_conf.p_level;
+    }
+    return channel.prot_conf.p_level;
+}
+
 void setPowerLimit(Channel &channel, float limit) {
     if (g_channelCoupling != TYPE_NONE) {
         Channel::get(0).setPowerLimit(limit / 2);
         Channel::get(1).setPowerLimit(limit / 2);
     } else {
         channel.setPowerLimit(limit);
+    }
+}
+
+float getOppMinLevel(Channel &channel) {
+    if (g_channelCoupling != TYPE_NONE) {
+        return 2 * max(Channel::get(0).OPP_MIN_LEVEL, Channel::get(1).OPP_MIN_LEVEL);
+    }
+    return channel.OPP_MIN_LEVEL;
+}
+
+float getOppMaxLevel(Channel &channel) {
+    if (g_channelCoupling != TYPE_NONE) {
+        return 2 * min(Channel::get(0).OPP_MAX_LEVEL, Channel::get(1).OPP_MAX_LEVEL);
+    }
+    return channel.OPP_MAX_LEVEL;
+}
+
+float getOppDefaultLevel(Channel &channel) {
+    if (g_channelCoupling != TYPE_NONE) {
+        return Channel::get(0).OPP_DEFAULT_LEVEL + Channel::get(1).OPP_DEFAULT_LEVEL;
+    }
+    return channel.OPP_DEFAULT_LEVEL;
+}
+
+void setOppParameters(Channel &channel, int state, float level, float delay) {
+    if (g_channelCoupling != TYPE_NONE) {
+	    Channel::get(0).prot_conf.flags.p_state = state;
+	    Channel::get(0).prot_conf.p_level = level;
+	    Channel::get(0).prot_conf.p_delay = delay;
+
+        Channel::get(1).prot_conf.flags.p_state = state;
+	    Channel::get(1).prot_conf.p_level = level;
+	    Channel::get(1).prot_conf.p_delay = delay;
+    } else {
+	    channel.prot_conf.flags.p_state = state;
+	    channel.prot_conf.p_level = level;
+	    channel.prot_conf.p_delay = delay;
     }
 }
 
@@ -281,6 +361,24 @@ void lowRippleAutoEnable(Channel& channel, bool enable) {
         Channel::get(1).lowRippleAutoEnable(enable);
     } else {
         channel.outputEnable(enable);
+    }
+}
+
+void clearProtection(Channel& channel) {
+    if (g_channelCoupling != TYPE_NONE) {
+        Channel::get(0).clearProtection();
+        Channel::get(1).clearProtection();
+    } else {
+        channel.clearProtection();
+    }
+}
+
+void disableProtection(Channel& channel) {
+    if (g_channelCoupling != TYPE_NONE) {
+        Channel::get(0).disableProtection();
+        Channel::get(1).disableProtection();
+    } else {
+        channel.disableProtection();
     }
 }
 

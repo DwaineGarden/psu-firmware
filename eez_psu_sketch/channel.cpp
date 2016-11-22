@@ -300,6 +300,10 @@ void Channel::protectionEnter(ProtectionValue &cpv) {
 	}
 
 	event_queue::pushEvent(eventId);
+
+    if (channel_coupling::getType() != channel_coupling::TYPE_NONE && index == 1) {
+        Channel::get(1).protectionEnter(cpv);
+    }
 }
 
 void Channel::protectionCheck(ProtectionValue &cpv) {
@@ -310,20 +314,20 @@ void Channel::protectionCheck(ProtectionValue &cpv) {
     if (IS_OVP_VALUE(this, cpv)) {
         state = flags.rprogEnabled || prot_conf.flags.u_state;
 		//condition = flags.cv_mode && (!flags.cc_mode || fabs(i.mon - i.set) >= CHANNEL_VALUE_PRECISION) && (prot_conf.u_level <= u.set);
-		condition = util::greaterOrEqual(u.mon, prot_conf.u_level, CHANNEL_VALUE_PRECISION);
+		condition = util::greaterOrEqual(channel_coupling::getUMon(*this), channel_coupling::getUProtectionLevel(*this), CHANNEL_VALUE_PRECISION);
         delay = prot_conf.u_delay;
         delay -= PROT_DELAY_CORRECTION;
     }
     else if (IS_OCP_VALUE(this, cpv)) {
         state = prot_conf.flags.i_state;
         //condition = flags.cc_mode && (!flags.cv_mode || fabs(u.mon - u.set) >= CHANNEL_VALUE_PRECISION);
-		condition = util::greaterOrEqual(i.mon, i.set, CHANNEL_VALUE_PRECISION);
+		condition = util::greaterOrEqual(channel_coupling::getIMon(*this), channel_coupling::getISet(*this), CHANNEL_VALUE_PRECISION);
         delay = prot_conf.i_delay;
         delay -= PROT_DELAY_CORRECTION;
     }
     else {
         state = prot_conf.flags.p_state;
-        condition = u.mon * i.mon > prot_conf.p_level;
+        condition = channel_coupling::getUMon(*this) * channel_coupling::getIMon(*this) > channel_coupling::getPowerProtectionLevel(*this);
         delay = prot_conf.p_delay;
     }
 
@@ -333,12 +337,12 @@ void Channel::protectionCheck(ProtectionValue &cpv) {
                 if (micros() - cpv.alarm_started >= delay * 1000000UL) {
                     cpv.flags.alarmed = 0;
 
-                    if (IS_OVP_VALUE(this, cpv)) {
-                        DebugTraceF("OVP condition: CV_MODE=%d, CC_MODE=%d, I DIFF=%d mA, I MON=%d mA", (int)flags.cvMode, (int)flags.ccMode, (int)(fabs(i.mon - i.set) * 1000), (int)(i.mon * 1000));
-                    }
-                    else if (IS_OCP_VALUE(this, cpv)) {
-                        DebugTraceF("OCP condition: CC_MODE=%d, CV_MODE=%d, U DIFF=%d mV", (int)flags.ccMode, (int)flags.cvMode, (int)(fabs(u.mon - u.set) * 1000));
-                    }
+                    //if (IS_OVP_VALUE(this, cpv)) {
+                    //    DebugTraceF("OVP condition: CV_MODE=%d, CC_MODE=%d, I DIFF=%d mA, I MON=%d mA", (int)flags.cvMode, (int)flags.ccMode, (int)(fabs(i.mon - i.set) * 1000), (int)(i.mon * 1000));
+                    //}
+                    //else if (IS_OCP_VALUE(this, cpv)) {
+                    //    DebugTraceF("OCP condition: CC_MODE=%d, CV_MODE=%d, U DIFF=%d mV", (int)flags.ccMode, (int)flags.cvMode, (int)(fabs(u.mon - u.set) * 1000));
+                    //}
 
                     protectionEnter(cpv);
                 }
@@ -349,12 +353,12 @@ void Channel::protectionCheck(ProtectionValue &cpv) {
             }
         }
         else {
-            if (IS_OVP_VALUE(this, cpv)) {
-                DebugTraceF("OVP condition: CV_MODE=%d, CC_MODE=%d, I DIFF=%d mA", (int)flags.cvMode, (int)flags.ccMode, (int)(fabs(i.mon - i.set) * 1000));
-            }
-            else if (IS_OCP_VALUE(this, cpv)) {
-                DebugTraceF("OCP condition: CC_MODE=%d, CV_MODE=%d, U DIFF=%d mV", (int)flags.ccMode, (int)flags.cvMode, (int)(fabs(u.mon - u.set) * 1000));
-            }
+            //if (IS_OVP_VALUE(this, cpv)) {
+            //    DebugTraceF("OVP condition: CV_MODE=%d, CC_MODE=%d, I DIFF=%d mA", (int)flags.cvMode, (int)flags.ccMode, (int)(fabs(i.mon - i.set) * 1000));
+            //}
+            //else if (IS_OCP_VALUE(this, cpv)) {
+            //    DebugTraceF("OCP condition: CC_MODE=%d, CV_MODE=%d, U DIFF=%d mV", (int)flags.ccMode, (int)flags.cvMode, (int)(fabs(u.mon - u.set) * 1000));
+            //}
 
 			protectionEnter(cpv);
         }
@@ -739,6 +743,17 @@ void Channel::setCvMode(bool cv_mode) {
     }
 }
 
+void Channel::protectionCheck() {
+    if (channel_coupling::getType() != channel_coupling::TYPE_NONE && index == 2) {
+        // protections of coupled channels are checked on channel 1
+        return;
+    }
+
+    protectionCheck(ovp);
+	protectionCheck(ocp);
+	protectionCheck(opp);
+}
+
 void Channel::event(uint8_t gpio, int16_t adc_data) {
     if (!psu::isPowerUp()) return;
 
@@ -767,9 +782,7 @@ void Channel::event(uint8_t gpio, int16_t adc_data) {
     setCcMode(gpio & (1 << IOExpander::IO_BIT_IN_CC_ACTIVE) ? true : false);
     updateCcAndCvSwitch();
 
-	protectionCheck(ovp);
-	protectionCheck(ocp);
-	protectionCheck(opp);
+    protectionCheck();
 }
 
 void Channel::adcReadMonDac() {

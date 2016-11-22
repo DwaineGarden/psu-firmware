@@ -45,8 +45,10 @@ float getUMaxLimit(const Channel &channel);
 float getUMin(const Channel &channel);
 float getUDef(const Channel &channel);
 float getUMax(const Channel &channel);
+float getUProtectionLevel(const Channel &channel);
 void setVoltage(Channel &channel, float voltage);
 void setVoltageLimit(Channel &channel, float limit);
+void setOvpParameters(Channel &channel, int state, float level, float delay);
 
 float getISet(const Channel &channel);
 float getIMon(const Channel &channel);
@@ -58,17 +60,27 @@ float getIDef(const Channel &channel);
 float getIMax(const Channel &channel);
 void setCurrent(Channel &channel, float current);
 void setCurrentLimit(Channel &channel, float limit);
+void setOcpParameters(Channel &channel, int state, float delay);
 
 float getPowerLimit(const Channel& channel);
 float getPowerMinLimit(const Channel& channel);
 float getPowerMaxLimit(const Channel& channel);
 float getPowerDefaultLimit(const Channel& channel);
+float getPowerProtectionLevel(const Channel& channel);
 void setPowerLimit(Channel &channel, float limit);
+
+float getOppMinLevel(Channel &channel);
+float getOppMaxLevel(Channel &channel);
+float getOppDefaultLevel(Channel &channel);
+void setOppParameters(Channel &channel, int state, float level, float delay);
 
 void outputEnable(Channel& channel, bool enable);
 bool isLowRippleAllowed(Channel& channel);
 bool lowRippleEnable(Channel& channel, bool enable);
 void lowRippleAutoEnable(Channel& channel, bool enable);
+
+void clearProtection(Channel& channel);
+void disableProtection(Channel& channel);
 
 }
 }

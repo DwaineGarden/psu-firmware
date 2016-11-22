@@ -525,6 +525,7 @@ private:
     void clearProtectionConf();
     void protectionEnter(ProtectionValue &cpv);
     void protectionCheck(ProtectionValue &cpv);
+    void protectionCheck();
 
 	void doCalibrationEnable(bool enable);
 	void calibrationFindVoltageRange(float minDac, float minVal, float minAdc, float maxDac, float maxVal, float maxAdc, float *min, float *max);

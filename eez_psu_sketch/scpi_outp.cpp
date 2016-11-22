@@ -46,7 +46,7 @@ scpi_result_t scpi_outp_ProtectionClear(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    channel->clearProtection();
+    channel_coupling::clearProtection(*channel);
 
     return SCPI_RES_OK;
 }
