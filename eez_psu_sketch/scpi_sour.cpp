@@ -361,8 +361,10 @@ scpi_result_t scpi_source_PowerProtectionLevelQ(scpi_t * context) {
         return SCPI_RES_ERR;
     }
     
-    return get_source_value(context, channel->prot_conf.p_level,
-        channel->OPP_MIN_LEVEL, channel->OPP_MAX_LEVEL, channel->OPP_DEFAULT_LEVEL);
+    return get_source_value(context, channel_coupling::getPowerProtectionLevel(*channel),
+        channel_coupling::getOppMinLevel(*channel),
+        channel_coupling::getOppMaxLevel(*channel),
+        channel_coupling::getOppDefaultLevel(*channel));
 }
 
 scpi_result_t scpi_source_PowerProtectionDelay(scpi_t * context) {
@@ -449,7 +451,7 @@ scpi_result_t scpi_source_VoltageProtectionLevelQ(scpi_t * context) {
         return SCPI_RES_ERR;
     }
     
-    return get_source_value(context, channel->prot_conf.u_level,
+    return get_source_value(context, channel_coupling::getUProtectionLevel(*channel),
         channel_coupling::getUSet(*channel),
         channel_coupling::getUMax(*channel),
         channel_coupling::getUMax(*channel));

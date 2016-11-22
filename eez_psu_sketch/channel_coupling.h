@@ -90,6 +90,12 @@ void lowRippleAutoEnable(Channel& channel, bool enable);
 void clearProtection(Channel& channel);
 void disableProtection(Channel& channel);
 
+void clearOtpProtection(int sensor);
+void setOtpParameters(Channel &channel, int state, float level, float delay);
+void setOtpState(int sensor, int state);
+void setOtpLevel(int sensor, float level);
+void setOtpDelay(int sensor, float delay);
+
 }
 }
 } // namespace eez::psu::channel_coupling

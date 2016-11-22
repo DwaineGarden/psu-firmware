@@ -120,24 +120,12 @@ bool getChannelSensorState(Channel *channel) {
 	return sensors[temp_sensor::CH1 + channel->index - 1].prot_conf.state;
 }
 
-void setChannelSensorState(Channel *channel, bool state) {
-	sensors[temp_sensor::CH1 + channel->index - 1].prot_conf.state = state;
-}
-
 float getChannelSensorLevel(Channel *channel) {
 	return sensors[temp_sensor::CH1 + channel->index - 1].prot_conf.level;
 }
 
-void setChannelSensorLevel(Channel *channel, float value) {
-	sensors[temp_sensor::CH1 + channel->index - 1].prot_conf.level = value;
-}
-
 float getChannelSensorDelay(Channel *channel) {
 	return sensors[temp_sensor::CH1 + channel->index - 1].prot_conf.delay;
-}
-
-void setChannelSensorDelay(Channel *channel, float value) {
-	sensors[temp_sensor::CH1 + channel->index - 1].prot_conf.delay = value;
 }
 #endif
 

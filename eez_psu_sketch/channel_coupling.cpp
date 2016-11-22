@@ -19,6 +19,7 @@
 #include "psu.h"
 #include "channel_coupling.h"
 #include "bp.h"
+#include "temperature.h"
 
 namespace eez {
 namespace psu {
@@ -46,6 +47,29 @@ void setType(Type value) {
 
             channel.setVoltage(getUMin(channel));
             channel.setCurrent(getIMin(channel));
+
+	        channel.prot_conf.flags.u_state = Channel::get(0).prot_conf.flags.u_state || Channel::get(1).prot_conf.flags.u_state ? 1 : 0;
+	        channel.prot_conf.u_level = 2 * min(Channel::get(0).prot_conf.u_level, Channel::get(1).prot_conf.u_level);
+	        channel.prot_conf.u_delay = min(Channel::get(0).prot_conf.u_delay, Channel::get(1).prot_conf.u_delay);
+
+	        channel.prot_conf.flags.i_state = Channel::get(0).prot_conf.flags.i_state || Channel::get(1).prot_conf.flags.i_state ? 1 : 0;
+	        channel.prot_conf.i_delay = min(Channel::get(0).prot_conf.i_delay, Channel::get(1).prot_conf.i_delay);
+
+	        channel.prot_conf.flags.p_state = Channel::get(0).prot_conf.flags.p_state || Channel::get(1).prot_conf.flags.p_state ? 1 : 0;
+	        channel.prot_conf.p_level = 2 * min(Channel::get(0).prot_conf.p_level, Channel::get(1).prot_conf.p_level);
+	        channel.prot_conf.p_delay = min(Channel::get(0).prot_conf.p_delay, Channel::get(1).prot_conf.p_delay);
+
+            temperature::sensors[temp_sensor::CH1 + channel.index - 1].prot_conf.state =
+                temperature::sensors[temp_sensor::CH1].prot_conf.state ||
+                temperature::sensors[temp_sensor::CH2].prot_conf.state ? 1 : 0;
+
+            temperature::sensors[temp_sensor::CH1 + channel.index - 1].prot_conf.level =
+                2 * min(temperature::sensors[temp_sensor::CH1].prot_conf.level,
+                    temperature::sensors[temp_sensor::CH2].prot_conf.level);
+            
+            temperature::sensors[temp_sensor::CH1 + channel.index - 1].prot_conf.delay =
+                min(temperature::sensors[temp_sensor::CH1].prot_conf.delay,
+                    temperature::sensors[temp_sensor::CH2].prot_conf.delay);
         }
 
         bp::switchChannelCoupling(g_channelCoupling);
@@ -451,6 +475,59 @@ void disableProtection(Channel& channel) {
         Channel::get(1).disableProtection();
     } else {
         channel.disableProtection();
+    }
+}
+
+void clearOtpProtection(int sensor) {
+    if ((sensor == temp_sensor::CH1 || sensor == temp_sensor::CH2) && g_channelCoupling != TYPE_NONE) {
+        temperature::sensors[temp_sensor::CH1].clearProtection();
+        temperature::sensors[temp_sensor::CH2].clearProtection();
+    } else {
+        temperature::sensors[sensor].clearProtection();
+    }
+}
+
+void setOtpParameters(Channel &channel, int state, float level, float delay) {
+    if (g_channelCoupling != TYPE_NONE) {
+        temperature::sensors[temp_sensor::CH1].prot_conf.state = state ? true : false;
+        temperature::sensors[temp_sensor::CH2].prot_conf.state = state ? true : false;
+
+        temperature::sensors[temp_sensor::CH1].prot_conf.level = level;
+        temperature::sensors[temp_sensor::CH2].prot_conf.level = level;
+
+        temperature::sensors[temp_sensor::CH1].prot_conf.delay = delay;
+        temperature::sensors[temp_sensor::CH2].prot_conf.delay = delay;
+    } else {
+        temperature::sensors[temp_sensor::CH1 + channel.index - 1].prot_conf.state = state ? true : false;
+        temperature::sensors[temp_sensor::CH1 + channel.index - 1].prot_conf.level = level;
+        temperature::sensors[temp_sensor::CH1 + channel.index - 1].prot_conf.delay = delay;
+    }
+}
+
+void setOtpState(int sensor, int state) {
+    if ((sensor == temp_sensor::CH1 || sensor == temp_sensor::CH2) && g_channelCoupling != TYPE_NONE) {
+        temperature::sensors[temp_sensor::CH1].prot_conf.state = state ? true : false;
+        temperature::sensors[temp_sensor::CH2].prot_conf.state = state ? true : false;
+    } else {
+        temperature::sensors[sensor].prot_conf.state = state ? true : false;
+    }
+}
+
+void setOtpLevel(int sensor, float level) {
+    if ((sensor == temp_sensor::CH1 || sensor == temp_sensor::CH2) && g_channelCoupling != TYPE_NONE) {
+        temperature::sensors[temp_sensor::CH1].prot_conf.level = level;
+        temperature::sensors[temp_sensor::CH2].prot_conf.level = level;
+    } else {
+        temperature::sensors[sensor].prot_conf.level = level;
+    }
+}
+
+void setOtpDelay(int sensor, float delay) {
+    if ((sensor == temp_sensor::CH1 || sensor == temp_sensor::CH2) && g_channelCoupling != TYPE_NONE) {
+        temperature::sensors[temp_sensor::CH1].prot_conf.delay = delay;
+        temperature::sensors[temp_sensor::CH2].prot_conf.delay = delay;
+    } else {
+        temperature::sensors[sensor].prot_conf.delay = delay;
     }
 }
 

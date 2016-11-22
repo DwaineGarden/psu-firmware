@@ -201,7 +201,7 @@ scpi_result_t scpi_syst_TempProtectionClear(scpi_t * context) {
 		return SCPI_RES_ERR;
     }
 
-    temperature::sensors[sensor].clearProtection();
+    channel_coupling::clearOtpProtection(sensor);
 
     return SCPI_RES_OK;
 }
@@ -217,7 +217,7 @@ scpi_result_t scpi_syst_TempProtectionLevel(scpi_t * context) {
 		return SCPI_RES_ERR;
     }
 
-    temperature::sensors[sensor].prot_conf.level = level;
+    channel_coupling::setOtpLevel(sensor, level);
     profile::save();
 
     return SCPI_RES_OK;
@@ -243,7 +243,7 @@ scpi_result_t scpi_syst_TempProtectionState(scpi_t * context) {
 		return SCPI_RES_ERR;
     }
 
-    temperature::sensors[sensor].prot_conf.state = state;
+    channel_coupling::setOtpState(sensor, state);
     profile::save();
 
     return SCPI_RES_OK;
@@ -271,7 +271,7 @@ scpi_result_t scpi_syst_TempProtectionDelay(scpi_t * context) {
 		return SCPI_RES_ERR;
     }
 
-    temperature::sensors[sensor].prot_conf.delay = delay;
+    channel_coupling::setOtpDelay(sensor, delay);
     profile::save();
 
     return SCPI_RES_OK;

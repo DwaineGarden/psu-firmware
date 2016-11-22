@@ -237,7 +237,7 @@ ChSettingsOvpProtectionPage::ChSettingsOvpProtectionPage() {
 	maxLimit = channel_coupling::getUMax(*g_channel);
 	defLimit = channel_coupling::getUMax(*g_channel);
 
-	origLevel = level = data::Value(g_channel->prot_conf.u_level, data::VALUE_TYPE_FLOAT_VOLT);
+	origLevel = level = data::Value(channel_coupling::getUProtectionLevel(*g_channel), data::VALUE_TYPE_FLOAT_VOLT);
 	minLevel = channel_coupling::getUSet(*g_channel);
 	maxLevel = channel_coupling::getUMax(*g_channel);
 	defLevel = channel_coupling::getUMax(*g_channel);
@@ -304,7 +304,7 @@ ChSettingsOppProtectionPage::ChSettingsOppProtectionPage() {
 	maxLimit = channel_coupling::getPowerMaxLimit(*g_channel);
 	defLimit = channel_coupling::getPowerDefaultLimit(*g_channel);
 
-	origLevel = level = data::Value(g_channel->prot_conf.p_level, data::VALUE_TYPE_FLOAT_WATT);
+	origLevel = level = data::Value(channel_coupling::getPowerProtectionLevel(*g_channel), data::VALUE_TYPE_FLOAT_WATT);
 	minLevel = channel_coupling::getOppMinLevel(*g_channel);
 	maxLevel = channel_coupling::getOppMaxLevel(*g_channel);
 	defLevel = channel_coupling::getOppDefaultLevel(*g_channel);
@@ -358,9 +358,7 @@ ChSettingsOtpProtectionPage::ChSettingsOtpProtectionPage() {
 
 void ChSettingsOtpProtectionPage::setParams(bool checkLoad) {
 #if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4	
-	temperature::setChannelSensorState(g_channel, state ? true : false);
-	temperature::setChannelSensorLevel(g_channel, level.getFloat());
-	temperature::setChannelSensorDelay(g_channel, delay.getFloat());
+	channel_coupling::setOtpParameters(*g_channel, state, level.getFloat(), delay.getFloat());
 	onSetFinish(checkLoad);
 #endif
 }

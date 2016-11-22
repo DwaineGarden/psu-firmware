@@ -302,7 +302,13 @@ void Channel::protectionEnter(ProtectionValue &cpv) {
 	event_queue::pushEvent(eventId);
 
     if (channel_coupling::getType() != channel_coupling::TYPE_NONE && index == 1) {
-        Channel::get(1).protectionEnter(cpv);
+        if (IS_OVP_VALUE(this, cpv)) {
+            Channel::get(1).protectionEnter(Channel::get(1).ovp);
+        } else if (IS_OCP_VALUE(this, cpv)) {
+            Channel::get(1).protectionEnter(Channel::get(1).ocp);
+        } else {
+            Channel::get(1).protectionEnter(Channel::get(1).opp);
+        }
     }
 }
 
