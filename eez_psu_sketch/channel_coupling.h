@@ -34,7 +34,7 @@ enum Type {
     TYPE_SERIES
 };
 
-void setType(Type value);
+bool setType(Type value);
 Type getType();
 
 float getUSet(const Channel &channel);

@@ -27,10 +27,14 @@ namespace channel_coupling {
 
 static Type g_channelCoupling = TYPE_NONE;
 
-void setType(Type value) {
+bool setType(Type value) {
     if (g_channelCoupling != value) {
         if (CH_NUM < 2) {
-            return;
+            return false;
+        }
+
+        if (!Channel::get(0).isOk() || !Channel::get(1).isOk()) {
+            return false;
         }
 
         g_channelCoupling = value;

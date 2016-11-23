@@ -252,7 +252,9 @@ void select(Cursor &cursor, uint8_t id, int index) {
 		cursor.i = index;
 	} else if (id == DATA_ID_PROFILES_LIST2) {
 		cursor.i = 4 + index;
-	}
+	} else if (id == DATA_ID_CHANNEL_COUPLING_MODE) {
+        cursor.i = 0;
+    }
 }
 
 Value getMin(const Cursor &cursor, uint8_t id) {

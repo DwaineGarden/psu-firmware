@@ -129,27 +129,21 @@ void ChSettingsAdvRProgPage::toggleStatus() {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-data::Value ChSettingsAdvCouplingPage::getData(const data::Cursor &cursor, uint8_t id, data::Snapshot *snapshot) {
-	if (id == DATA_ID_CHANNEL_COUPLING_MODE) {
-		return data::Value(channel_coupling::getType());
-	}
-
-	return data::Value();
-}
-
 void ChSettingsAdvCouplingPage::uncouple() {
     channel_coupling::setType(channel_coupling::TYPE_NONE);
 	infoMessageP(PSTR("Channels uncoupled!"));
 }
 
 void ChSettingsAdvCouplingPage::setParallel() {
-    channel_coupling::setType(channel_coupling::TYPE_PARALLEL);
-	infoMessageP(PSTR("Channels coupled in parallel!"));
+    if (channel_coupling::setType(channel_coupling::TYPE_PARALLEL)) {
+	    infoMessageP(PSTR("Channels coupled in parallel!"));
+    }
 }
 
 void ChSettingsAdvCouplingPage::setSeries() {
-    channel_coupling::setType(channel_coupling::TYPE_SERIES);
-	infoMessageP(PSTR("Channels coupled in series!"));
+    if (channel_coupling::setType(channel_coupling::TYPE_SERIES)) {
+	    infoMessageP(PSTR("Channels coupled in series!"));
+    }
 }
 
 }

@@ -170,7 +170,8 @@ enum FontsEnum {
 
 enum BitmapsEnum {
     BITMAP_ID_NONE,
-    BITMAP_ID_LOGO
+    BITMAP_ID_LOGO,
+    BITMAP_ID_BP_COUPLED
 };
 
 enum StylesEnum {

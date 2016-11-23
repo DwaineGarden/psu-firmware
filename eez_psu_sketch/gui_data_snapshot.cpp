@@ -174,6 +174,10 @@ Value Snapshot::get(const Cursor &cursor, uint8_t id) {
 		return Value(flags.channelDisplayedValues);
 	}
 
+	if (id == DATA_ID_CHANNEL_COUPLING_MODE) {
+		return data::Value(channel_coupling::getType());
+	}
+
 	if (cursor.i >= 0 || g_channel != 0) {
 		int iChannel = cursor.i >= 0 ? cursor.i : g_channel->index - 1;
 
