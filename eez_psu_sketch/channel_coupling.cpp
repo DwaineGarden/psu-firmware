@@ -53,14 +53,14 @@ bool setType(Type value) {
             channel.setCurrent(getIMin(channel));
 
 	        channel.prot_conf.flags.u_state = Channel::get(0).prot_conf.flags.u_state || Channel::get(1).prot_conf.flags.u_state ? 1 : 0;
-	        channel.prot_conf.u_level = 2 * min(Channel::get(0).prot_conf.u_level, Channel::get(1).prot_conf.u_level);
+	        channel.prot_conf.u_level = min(Channel::get(0).prot_conf.u_level, Channel::get(1).prot_conf.u_level);
 	        channel.prot_conf.u_delay = min(Channel::get(0).prot_conf.u_delay, Channel::get(1).prot_conf.u_delay);
 
 	        channel.prot_conf.flags.i_state = Channel::get(0).prot_conf.flags.i_state || Channel::get(1).prot_conf.flags.i_state ? 1 : 0;
 	        channel.prot_conf.i_delay = min(Channel::get(0).prot_conf.i_delay, Channel::get(1).prot_conf.i_delay);
 
 	        channel.prot_conf.flags.p_state = Channel::get(0).prot_conf.flags.p_state || Channel::get(1).prot_conf.flags.p_state ? 1 : 0;
-	        channel.prot_conf.p_level = 2 * min(Channel::get(0).prot_conf.p_level, Channel::get(1).prot_conf.p_level);
+	        channel.prot_conf.p_level = min(Channel::get(0).prot_conf.p_level, Channel::get(1).prot_conf.p_level);
 	        channel.prot_conf.p_delay = min(Channel::get(0).prot_conf.p_delay, Channel::get(1).prot_conf.p_delay);
 
             temperature::sensors[temp_sensor::CH1 + channel.index - 1].prot_conf.state =
@@ -68,7 +68,7 @@ bool setType(Type value) {
                 temperature::sensors[temp_sensor::CH2].prot_conf.state ? 1 : 0;
 
             temperature::sensors[temp_sensor::CH1 + channel.index - 1].prot_conf.level =
-                2 * min(temperature::sensors[temp_sensor::CH1].prot_conf.level,
+                min(temperature::sensors[temp_sensor::CH1].prot_conf.level,
                     temperature::sensors[temp_sensor::CH2].prot_conf.level);
             
             temperature::sensors[temp_sensor::CH1 + channel.index - 1].prot_conf.delay =
@@ -78,6 +78,8 @@ bool setType(Type value) {
 
         bp::switchChannelCoupling(g_channelCoupling);
     }
+
+    return true;
 }
 
 Type getType() {
