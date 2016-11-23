@@ -267,7 +267,7 @@ void ChSettingsOvpProtectionPage::setParams(bool checkLoad) {
 ChSettingsOcpProtectionPage::ChSettingsOcpProtectionPage() {
 	origState = state = g_channel->prot_conf.flags.i_state ? 1 : 0;
 
-	origLimit = limit = data::Value(channel_coupling::getILimit(*g_channel), data::VALUE_TYPE_FLOAT_SECOND);
+	origLimit = limit = data::Value(channel_coupling::getILimit(*g_channel), data::VALUE_TYPE_FLOAT_AMPER);
 	minLimit = channel_coupling::getIMin(*g_channel);
 	maxLimit = channel_coupling::getIMaxLimit(*g_channel);
 	defLimit = maxLimit;
