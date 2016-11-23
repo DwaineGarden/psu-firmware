@@ -420,6 +420,14 @@ void action_ch_settins_adv_coupling_uncouple() {
     ((ChSettingsAdvCouplingPage *)getActivePage())->uncouple();
 }
 
+void action_ch_settins_adv_coupling_set_parallel_info() {
+    ((ChSettingsAdvCouplingPage *)getActivePage())->setParallelInfo();
+}
+
+void action_ch_settins_adv_coupling_set_series_info() {
+    ((ChSettingsAdvCouplingPage *)getActivePage())->setSeriesInfo();
+}
+
 void action_ch_settins_adv_coupling_set_parallel() {
     ((ChSettingsAdvCouplingPage *)getActivePage())->setParallel();
 }
@@ -524,6 +532,8 @@ ACTION actions[] = {
     action_sys_settings_ethernet_enable,
     action_sys_settings_ethernet_disable,
     action_ch_settins_adv_coupling_uncouple,
+    action_ch_settins_adv_coupling_set_parallel_info,
+    action_ch_settins_adv_coupling_set_series_info,
     action_ch_settins_adv_coupling_set_parallel,
     action_ch_settins_adv_coupling_set_series
 };

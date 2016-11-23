@@ -65,9 +65,16 @@ public:
 
 class ChSettingsAdvCouplingPage : public Page {
 public:
+	data::Value getData(const data::Cursor &cursor, uint8_t id, data::Snapshot *snapshot);
+
     void uncouple();
+    void setParallelInfo();
+    void setSeriesInfo();
     void setParallel();
     void setSeries();
+
+private:
+    static int selectedMode;
 };
 
 }
