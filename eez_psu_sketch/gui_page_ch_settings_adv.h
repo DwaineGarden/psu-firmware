@@ -63,6 +63,15 @@ public:
 	void toggleStatus();
 };
 
+class ChSettingsAdvCouplingPage : public Page {
+public:
+	data::Value getData(const data::Cursor &cursor, uint8_t id, data::Snapshot *snapshot);
+
+    void uncouple();
+    void setParallel();
+    void setSeries();
+};
+
 }
 }
 } // namespace eez::psu::gui

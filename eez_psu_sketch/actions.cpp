@@ -145,7 +145,7 @@ void action_cancel() {
 }
 
 void action_turn_off() {
-
+    // TODO...
 }
 
 void action_show_previous_page() {
@@ -254,6 +254,10 @@ void action_show_ch_settings_adv_rprog() {
     setPage(PAGE_ID_CH_SETTINGS_ADV_RPROG);
 }
 
+void action_show_ch_settings_adv_coupling() {
+    setPage(PAGE_ID_CH_SETTINGS_ADV_COUPLING);
+}
+
 void action_show_ch_settings_info() {
     setPage(PAGE_ID_CH_SETTINGS_INFO);
 }
@@ -264,10 +268,6 @@ void action_show_ch_settings_info_cal() {
 
 void action_sys_settings_cal_edit_password() {
     gui::calibration::editPassword();
-}
-
-void action_sys_settings_cal_ch_params_enabled() {
-
 }
 
 void action_sys_settings_cal_ch_wiz_start() {
@@ -416,6 +416,18 @@ void action_sys_settings_ethernet_disable() {
     SysSettingsEthernetPage::disable();
 }
 
+void action_ch_settins_adv_coupling_uncouple() {
+    ((ChSettingsAdvCouplingPage *)getActivePage())->uncouple();
+}
+
+void action_ch_settins_adv_coupling_set_parallel() {
+    ((ChSettingsAdvCouplingPage *)getActivePage())->setParallel();
+}
+
+void action_ch_settins_adv_coupling_set_series() {
+    ((ChSettingsAdvCouplingPage *)getActivePage())->setSeries();
+}
+
 
 ACTION actions[] = {
     0,
@@ -471,10 +483,10 @@ ACTION actions[] = {
     action_show_ch_settings_adv_lripple,
     action_show_ch_settings_adv_rsense,
     action_show_ch_settings_adv_rprog,
+    action_show_ch_settings_adv_coupling,
     action_show_ch_settings_info,
     action_show_ch_settings_info_cal,
     action_sys_settings_cal_edit_password,
-    action_sys_settings_cal_ch_params_enabled,
     action_sys_settings_cal_ch_wiz_start,
     action_sys_settings_cal_ch_wiz_step_previous,
     action_sys_settings_cal_ch_wiz_step_next,
@@ -510,7 +522,10 @@ ACTION actions[] = {
     action_profile_edit_remark,
     action_toggle_channel_displayed_values,
     action_sys_settings_ethernet_enable,
-    action_sys_settings_ethernet_disable
+    action_sys_settings_ethernet_disable,
+    action_ch_settins_adv_coupling_uncouple,
+    action_ch_settins_adv_coupling_set_parallel,
+    action_ch_settins_adv_coupling_set_series
 };
 
 }
