@@ -92,8 +92,13 @@ void switchStandby(bool on) {
 
 void switchOutput(Channel *channel, bool on) {
 #if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R1B9
-    bp_switch((1 << channel->bp_led_out_plus) |
-        (1 << channel->bp_led_out_minus), on);
+    if (g_channelCouplingType == CHANNELS_COUPLING_TYPE_NONE) {
+        bp_switch((1 << channel->bp_led_out_plus) | (1 << channel->bp_led_out_minus), on);
+    } else {
+        if (channe->index == 1) {
+            bp_switch((1 << BP_LED_OUT1_PLUS_RED) | (1 << BP_LED_OUT1_MINUS_RED), on);
+        }
+    }
 #elif EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4
     if (g_channelCouplingType == CHANNELS_COUPLING_TYPE_NONE) {
         bp_switch((1 << channel->bp_led_out), on);

@@ -96,6 +96,11 @@ void setOtpState(int sensor, int state);
 void setOtpLevel(int sensor, float level);
 void setOtpDelay(int sensor, float delay);
 
+#ifdef EEZ_PSU_SIMULATOR
+void setLoadEnabled(Channel &channel, bool state);
+void setLoad(Channel &channel, float load);
+#endif
+
 }
 }
 } // namespace eez::psu::channel_coupling
