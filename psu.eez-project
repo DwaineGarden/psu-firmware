@@ -11287,7 +11287,7 @@
                   "y": 0,
                   "width": 180,
                   "height": 28,
-                  "style": "default_disabled_S_left",
+                  "style": "edit_value_active_S_left",
                   "text": "Low ripple mode"
                 },
                 {
@@ -11297,7 +11297,7 @@
                   "y": 0,
                   "width": 180,
                   "height": 28,
-                  "style": "edit_value_active_S_left",
+                  "style": "default_disabled_S_left",
                   "text": "Low ripple mode"
                 }
               ]
@@ -11336,7 +11336,7 @@
                   "y": 0,
                   "width": 180,
                   "height": 28,
-                  "style": "default_disabled_S_left",
+                  "style": "edit_value_active_S_left",
                   "text": "Remote sensing"
                 },
                 {
@@ -11346,7 +11346,7 @@
                   "y": 0,
                   "width": 180,
                   "height": 28,
-                  "style": "edit_value_active_S_left",
+                  "style": "default_disabled_S_left",
                   "text": "Remote sensing"
                 }
               ]
