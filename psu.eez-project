@@ -11262,14 +11262,45 @@
               "text": "Advanced settings"
             },
             {
-              "type": "Text",
-              "action": "show_ch_settings_adv_lripple",
+              "type": "Select",
+              "data": "channel.coupling.mode",
               "x": 16,
               "y": 28,
               "width": 180,
               "height": 28,
-              "style": "edit_value_active_S_left",
-              "text": "Low ripple mode"
+              "style": "default",
+              "widgets": [
+                {
+                  "type": "Text",
+                  "action": "show_ch_settings_adv_lripple",
+                  "x": 0,
+                  "y": 0,
+                  "width": 180,
+                  "height": 28,
+                  "style": "edit_value_active_S_left",
+                  "text": "Low ripple mode"
+                },
+                {
+                  "type": "Text",
+                  "action": "show_ch_settings_adv_lripple",
+                  "x": 0,
+                  "y": 0,
+                  "width": 180,
+                  "height": 28,
+                  "style": "default_disabled_S_left",
+                  "text": "Low ripple mode"
+                },
+                {
+                  "type": "Text",
+                  "action": "show_ch_settings_adv_lripple",
+                  "x": 0,
+                  "y": 0,
+                  "width": 180,
+                  "height": 28,
+                  "style": "edit_value_active_S_left",
+                  "text": "Low ripple mode"
+                }
+              ]
             },
             {
               "type": "Rectangle",
@@ -11280,14 +11311,45 @@
               "style": "default_inverse"
             },
             {
-              "type": "Text",
-              "action": "show_ch_settings_adv_rsense",
+              "type": "Select",
+              "data": "channel.coupling.mode",
               "x": 16,
               "y": 56,
               "width": 180,
               "height": 28,
-              "style": "edit_value_active_S_left",
-              "text": "Remote sensing"
+              "style": "default",
+              "widgets": [
+                {
+                  "type": "Text",
+                  "action": "show_ch_settings_adv_rsense",
+                  "x": 0,
+                  "y": 0,
+                  "width": 180,
+                  "height": 28,
+                  "style": "edit_value_active_S_left",
+                  "text": "Remote sensing"
+                },
+                {
+                  "type": "Text",
+                  "action": "show_ch_settings_adv_rsense",
+                  "x": 0,
+                  "y": 0,
+                  "width": 180,
+                  "height": 28,
+                  "style": "default_disabled_S_left",
+                  "text": "Remote sensing"
+                },
+                {
+                  "type": "Text",
+                  "action": "show_ch_settings_adv_rsense",
+                  "x": 0,
+                  "y": 0,
+                  "width": 180,
+                  "height": 28,
+                  "style": "edit_value_active_S_left",
+                  "text": "Remote sensing"
+                }
+              ]
             },
             {
               "type": "Rectangle",
@@ -11325,14 +11387,45 @@
                   "style": "default",
                   "widgets": [
                     {
-                      "type": "Text",
-                      "action": "show_ch_settings_adv_rprog",
+                      "type": "Select",
+                      "data": "channel.coupling.mode",
                       "x": 0,
                       "y": 0,
                       "width": 180,
                       "height": 28,
-                      "style": "edit_value_active_S_left",
-                      "text": "Remote programming"
+                      "style": "default",
+                      "widgets": [
+                        {
+                          "type": "Text",
+                          "action": "show_ch_settings_adv_rprog",
+                          "x": 0,
+                          "y": 0,
+                          "width": 180,
+                          "height": 28,
+                          "style": "edit_value_active_S_left",
+                          "text": "Remote programming"
+                        },
+                        {
+                          "type": "Text",
+                          "action": "show_ch_settings_adv_rprog",
+                          "x": 0,
+                          "y": 0,
+                          "width": 180,
+                          "height": 28,
+                          "style": "default_disabled_S_left",
+                          "text": "Remote programming"
+                        },
+                        {
+                          "type": "Text",
+                          "action": "show_ch_settings_adv_rprog",
+                          "x": 0,
+                          "y": 0,
+                          "width": 180,
+                          "height": 28,
+                          "style": "default_disabled_S_left",
+                          "text": "Remote programming"
+                        }
+                      ]
                     },
                     {
                       "type": "Rectangle",
@@ -12520,8 +12613,7 @@
             },
             {
               "type": "Select",
-              "data": "channel.calibration.status",
-              "action": "",
+              "data": "channel.coupling.mode",
               "x": 148,
               "y": 112,
               "width": 104,
@@ -12529,24 +12621,100 @@
               "style": "default",
               "widgets": [
                 {
-                  "type": "Text",
-                  "action": "show_ch_settings_info_cal",
+                  "type": "Select",
+                  "data": "channel.calibration.status",
+                  "action": "",
                   "x": 0,
                   "y": 0,
                   "width": 104,
                   "height": 28,
-                  "style": "edit_value_active_S_left",
-                  "text": "Calibrate"
+                  "style": "default",
+                  "widgets": [
+                    {
+                      "type": "Text",
+                      "action": "show_ch_settings_info_cal",
+                      "x": 0,
+                      "y": 0,
+                      "width": 104,
+                      "height": 28,
+                      "style": "edit_value_active_S_left",
+                      "text": "Calibrate"
+                    },
+                    {
+                      "type": "Text",
+                      "action": "show_ch_settings_info_cal",
+                      "x": 0,
+                      "y": 0,
+                      "width": 104,
+                      "height": 28,
+                      "style": "edit_value_active_S_left",
+                      "text": "Recalibrate"
+                    }
+                  ]
                 },
                 {
-                  "type": "Text",
-                  "action": "show_ch_settings_info_cal",
+                  "type": "Select",
+                  "data": "channel.calibration.status",
+                  "action": "",
                   "x": 0,
                   "y": 0,
                   "width": 104,
                   "height": 28,
-                  "style": "edit_value_active_S_left",
-                  "text": "Recalibrate"
+                  "style": "default",
+                  "widgets": [
+                    {
+                      "type": "Text",
+                      "action": "show_ch_settings_info_cal",
+                      "x": 0,
+                      "y": 0,
+                      "width": 104,
+                      "height": 28,
+                      "style": "default_disabled_S_left",
+                      "text": "Calibrate"
+                    },
+                    {
+                      "type": "Text",
+                      "action": "show_ch_settings_info_cal",
+                      "x": 0,
+                      "y": 0,
+                      "width": 104,
+                      "height": 28,
+                      "style": "default_disabled_S_left",
+                      "text": "Recalibrate"
+                    }
+                  ]
+                },
+                {
+                  "type": "Select",
+                  "data": "channel.calibration.status",
+                  "action": "",
+                  "x": 0,
+                  "y": 0,
+                  "width": 104,
+                  "height": 28,
+                  "style": "default",
+                  "widgets": [
+                    {
+                      "type": "Text",
+                      "action": "show_ch_settings_info_cal",
+                      "x": 0,
+                      "y": 0,
+                      "width": 104,
+                      "height": 28,
+                      "style": "default_disabled_S_left",
+                      "text": "Calibrate"
+                    },
+                    {
+                      "type": "Text",
+                      "action": "show_ch_settings_info_cal",
+                      "x": 0,
+                      "y": 0,
+                      "width": 104,
+                      "height": 28,
+                      "style": "default_disabled_S_left",
+                      "text": "Recalibrate"
+                    }
+                  ]
                 }
               ]
             },
