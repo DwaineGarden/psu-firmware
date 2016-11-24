@@ -3742,9 +3742,9 @@
                                 "type": "DisplayData",
                                 "data": "channel.i.set",
                                 "action": "edit",
-                                "x": 104,
+                                "x": 103,
                                 "y": 152,
-                                "width": 55,
+                                "width": 56,
                                 "height": 24,
                                 "style": "edit_S"
                               }
@@ -4910,9 +4910,9 @@
                           "type": "DisplayData",
                           "data": "channel.i.set",
                           "action": "edit",
-                          "x": 104,
+                          "x": 103,
                           "y": 152,
-                          "width": 55,
+                          "width": 56,
                           "height": 24,
                           "style": "edit_S"
                         },
@@ -6075,9 +6075,9 @@
                           "type": "DisplayData",
                           "data": "channel.i.set",
                           "action": "edit",
-                          "x": 104,
+                          "x": 103,
                           "y": 152,
-                          "width": 55,
+                          "width": 56,
                           "height": 24,
                           "style": "edit_S"
                         },
