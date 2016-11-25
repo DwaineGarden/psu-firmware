@@ -45,7 +45,10 @@ bool setType(Type value) {
 
         for (int i = 0; i < 2; ++i) {
     		Channel &channel = Channel::get(i);
+
             channel.outputEnable(false);
+            channel.remoteSensingEnable(false);
+
             if (channel.getFeatures() & CH_FEATURE_RPROG) {
                 channel.remoteProgrammingEnable(false);
             }
