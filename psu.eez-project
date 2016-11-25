@@ -14847,19 +14847,9 @@
             "style": "edit_value"
           },
           {
-            "type": "Text",
-            "action": "show_channel_settings",
-            "x": 0,
-            "y": 114,
-            "width": 80,
-            "height": 24,
-            "style": "edit_S",
-            "text": "` Set"
-          },
-          {
             "type": "Select",
             "data": "lrip",
-            "x": 80,
+            "x": 0,
             "y": 114,
             "width": 48,
             "height": 24,
@@ -14888,7 +14878,7 @@
           {
             "type": "Select",
             "data": "ocp",
-            "x": 128,
+            "x": 48,
             "y": 114,
             "width": 48,
             "height": 24,
@@ -14926,7 +14916,7 @@
           {
             "type": "Select",
             "data": "ovp",
-            "x": 176,
+            "x": 96,
             "y": 114,
             "width": 48,
             "height": 24,
@@ -14964,7 +14954,7 @@
           {
             "type": "Select",
             "data": "otp",
-            "x": 224,
+            "x": 144,
             "y": 114,
             "width": 48,
             "height": 24,
@@ -15002,7 +14992,7 @@
           {
             "type": "Select",
             "data": "opp",
-            "x": 272,
+            "x": 192,
             "y": 114,
             "width": 48,
             "height": 24,
@@ -15036,6 +15026,16 @@
                 "text": "OPP"
               }
             ]
+          },
+          {
+            "type": "Text",
+            "action": "show_channel_settings",
+            "x": 240,
+            "y": 114,
+            "width": 80,
+            "height": 24,
+            "style": "edit_S",
+            "text": "` Set"
           },
           {
             "type": "Rectangle",
