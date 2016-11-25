@@ -4968,6 +4968,7 @@
                           "type": "DisplayData",
                           "data": "channel.i.set",
                           "action": "edit",
+<<<<<<< HEAD
                           "x": 216,
                           "y": 78,
                           "width": 104,
@@ -4982,6 +4983,13 @@
                           "width": 104,
                           "height": 36,
                           "style": "edit_value"
+=======
+                          "x": 103,
+                          "y": 152,
+                          "width": 56,
+                          "height": 24,
+                          "style": "edit_S"
+>>>>>>> b8db556ad80f4d68eed4da70e355e3097dab747e
                         },
                         {
                           "type": "Text",
