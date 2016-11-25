@@ -4609,11 +4609,12 @@
                             "widgets": [
                               {
                                 "type": "Text",
+                                "action": "toggle_channel",
                                 "x": 0,
                                 "y": 0,
                                 "width": 64,
                                 "height": 32,
-                                "style": "edit_value_S_right",
+                                "style": "edit_value_active_S_right",
                                 "text": "OFF"
                               },
                               {
@@ -4628,21 +4629,23 @@
                                   {
                                     "type": "DisplayData",
                                     "data": "channel.monValue",
+                                    "action": "toggle_channel",
                                     "x": 0,
                                     "y": 0,
                                     "width": 64,
                                     "height": 32,
-                                    "style": "edit_value_S_right",
+                                    "style": "edit_value_active_S_right",
                                     "activeStyle": ""
                                   },
                                   {
                                     "type": "DisplayData",
                                     "data": "channel.monValue",
+                                    "action": "toggle_channel",
                                     "x": 0,
                                     "y": 0,
                                     "width": 64,
                                     "height": 32,
-                                    "style": "edit_value_ur_S_right",
+                                    "style": "edit_value_active_S_right",
                                     "activeStyle": ""
                                   }
                                 ]
@@ -4657,8 +4660,8 @@
                             "y": 32,
                             "width": 64,
                             "height": 30,
-                            "style": "edit_value_S_right",
-                            "activeStyle": "edit_value_active_S_right"
+                            "style": "edit_value_active_S_right",
+                            "activeStyle": "edit_value_focus_S_right"
                           },
                           {
                             "type": "DisplayData",
@@ -4668,8 +4671,8 @@
                             "y": 62,
                             "width": 64,
                             "height": 30,
-                            "style": "edit_value_S_right",
-                            "activeStyle": "edit_value_active_S_right"
+                            "style": "edit_value_active_S_right",
+                            "activeStyle": "edit_value_focus_S_right"
                           }
                         ]
                       },
@@ -14278,7 +14281,7 @@
                       "width": 64,
                       "height": 30,
                       "style": "edit_value_S_right",
-                      "activeStyle": "edit_value_active_S_right"
+                      "activeStyle": "edit_value_focus_S_right"
                     },
                     {
                       "type": "DisplayData",
@@ -14288,7 +14291,7 @@
                       "width": 64,
                       "height": 30,
                       "style": "edit_value_S_right",
-                      "activeStyle": "edit_value_active_S_right"
+                      "activeStyle": "edit_value_focus_S_right"
                     }
                   ]
                 },
@@ -16409,6 +16412,18 @@
         "inheritFrom": "default_S",
         "alignHorizontal": "left",
         "color": "#ff0000"
+      },
+      {
+        "name": "edit_value_focus_S_right",
+        "inheritFrom": "default",
+        "font": "small",
+        "alignHorizontal": "right",
+        "alignVertical": "center",
+        "color": "#c8e7f0",
+        "borderSize": 0,
+        "borderColor": "#D3D3D3",
+        "paddingHorizontal": 0,
+        "paddingVertical": 0
       }
     ],
     "fonts": [
