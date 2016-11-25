@@ -519,6 +519,11 @@ scpi_result_t scpi_source_VoltageProtectionTrippedQ(scpi_t * context) {
 }
 
 scpi_result_t scpi_source_VoltageSenseSource(scpi_t * context) {
+    if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
+        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
+        return SCPI_RES_ERR;
+    }
+
     if (!OPTION_BP) {
         SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
         return SCPI_RES_ERR;
@@ -540,6 +545,11 @@ scpi_result_t scpi_source_VoltageSenseSource(scpi_t * context) {
 }
 
 scpi_result_t scpi_source_VoltageSenseSourceQ(scpi_t * context) {
+    if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
+        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
+        return SCPI_RES_ERR;
+    }
+
     if (!OPTION_BP) {
         SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
         return SCPI_RES_ERR;
@@ -556,6 +566,11 @@ scpi_result_t scpi_source_VoltageSenseSourceQ(scpi_t * context) {
 }
 
 scpi_result_t scpi_source_VoltageProgramSource(scpi_t * context) {
+    if (channel_coupling::getType() != channel_coupling::TYPE_NONE) {
+        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
+        return SCPI_RES_ERR;
+    }
+
     Channel *channel = set_channel_from_command_number(context);
     if (!channel) {
         return SCPI_RES_ERR;
@@ -563,11 +578,6 @@ scpi_result_t scpi_source_VoltageProgramSource(scpi_t * context) {
 
     if (!(channel->getFeatures() & CH_FEATURE_RPROG)) {
         SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
-        return SCPI_RES_ERR;
-    }
-
-    if (channel_coupling::getType() != channel_coupling::TYPE_NONE) {
-        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
         return SCPI_RES_ERR;
     }
 
@@ -582,6 +592,11 @@ scpi_result_t scpi_source_VoltageProgramSource(scpi_t * context) {
 }
 
 scpi_result_t scpi_source_VoltageProgramSourceQ(scpi_t * context) {
+    if (channel_coupling::getType() != channel_coupling::TYPE_NONE) {
+        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
+        return SCPI_RES_ERR;
+    }
+
     Channel *channel = set_channel_from_command_number(context);
     if (!channel) {
         return SCPI_RES_ERR;
@@ -598,12 +613,17 @@ scpi_result_t scpi_source_VoltageProgramSourceQ(scpi_t * context) {
 }
 
 scpi_result_t scpi_source_LRipple(scpi_t * context) {
+    if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
+        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
+        return SCPI_RES_ERR;
+    }
+
     Channel *channel = set_channel_from_command_number(context);
     if (!channel) {
         return SCPI_RES_ERR;
     }
 
-    if (!channel_coupling::isLowRippleAllowed(*channel)) {
+    if (!(channel->getFeatures() & CH_FEATURE_LRIPPLE)) {
         SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
         return SCPI_RES_ERR;
     }
@@ -622,6 +642,11 @@ scpi_result_t scpi_source_LRipple(scpi_t * context) {
 }
 
 scpi_result_t scpi_source_LRippleQ(scpi_t * context) {
+    if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
+        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
+        return SCPI_RES_ERR;
+    }
+
     Channel *channel = set_channel_from_command_number(context);
     if (!channel) {
         return SCPI_RES_ERR;
@@ -638,6 +663,11 @@ scpi_result_t scpi_source_LRippleQ(scpi_t * context) {
 }
 
 scpi_result_t scpi_source_LRippleAuto(scpi_t * context) {
+    if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
+        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
+        return SCPI_RES_ERR;
+    }
+
     Channel *channel = set_channel_from_command_number(context);
     if (!channel) {
         return SCPI_RES_ERR;
@@ -659,12 +689,17 @@ scpi_result_t scpi_source_LRippleAuto(scpi_t * context) {
 }
 
 scpi_result_t scpi_source_LRippleAutoQ(scpi_t * context) {
+    if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
+        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
+        return SCPI_RES_ERR;
+    }
+
     Channel *channel = set_channel_from_command_number(context);
     if (!channel) {
         return SCPI_RES_ERR;
     }
 
-    if (!(channel->getFeatures() & CH_FEATURE_RPROG)) {
+    if (!(channel->getFeatures() & CH_FEATURE_LRIPPLE)) {
         SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
         return SCPI_RES_ERR;
     }

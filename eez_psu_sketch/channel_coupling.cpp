@@ -450,14 +450,6 @@ void outputEnable(Channel& channel, bool enable) {
     }
 }
 
-bool isLowRippleAllowed(Channel& channel) {
-    if (g_channelCoupling != TYPE_NONE) {
-        return (Channel::get(0).getFeatures() & CH_FEATURE_LRIPPLE) && (Channel::get(1).getFeatures() & CH_FEATURE_LRIPPLE);
-    } else {
-        return (channel.getFeatures() & CH_FEATURE_LRIPPLE) ? true : false;
-    }
-}
-
 bool lowRippleEnable(Channel& channel, bool enable) {
     if (g_channelCoupling != TYPE_NONE) {
         return Channel::get(0).lowRippleEnable(enable) && Channel::get(1).lowRippleEnable(enable);

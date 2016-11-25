@@ -134,6 +134,11 @@ scpi_result_t scpi_cal_Clear(scpi_t * context) {
 }
 
 scpi_result_t scpi_cal_Mode(scpi_t * context) {
+    if (channel_coupling::getType() != channel_coupling::TYPE_NONE) {
+        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
+        return SCPI_RES_ERR;
+    }
+
     bool enable;
     if (!SCPI_ParamBool(context, &enable, TRUE)) {
         return SCPI_RES_ERR;
@@ -153,11 +158,6 @@ scpi_result_t scpi_cal_Mode(scpi_t * context) {
 
     if (!channel->isOutputEnabled()) {
         SCPI_ErrorPush(context, SCPI_ERROR_BAD_SEQUENCE_OF_CALIBRATION_COMMANDS);
-        return SCPI_RES_ERR;
-    }
-
-    if (channel_coupling::getType() != channel_coupling::TYPE_NONE) {
-        SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
         return SCPI_RES_ERR;
     }
 
