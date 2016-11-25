@@ -18,6 +18,8 @@
 
 #include "psu.h"
 #include "channel_coupling.h"
+#include "sound.h"
+
 #include "gui_data_snapshot.h"
 #include "gui_edit_mode.h"
 #include "gui_edit_mode_slider.h"
@@ -94,12 +96,27 @@ void enter(int tabIndex_) {
 		tabIndex = tabIndex_;
 	}
 
-    if (getActivePageId() != tabIndex) {
-        if (getActivePageId() == PAGE_ID_MAIN) {
-            dataCursor = g_foundWidgetAtDown.cursor;
-            DECL_WIDGET(widget, g_foundWidgetAtDown.widgetOffset);
-            dataId = widget->data;
+    data::Cursor newDataCursor;
+    int newDataId;
+    if (tabIndex_ == -1) {
+        newDataCursor = g_foundWidgetAtDown.cursor;
+        DECL_WIDGET(widget, g_foundWidgetAtDown.widgetOffset);
+        newDataId = widget->data;
+    } else {
+        newDataCursor = dataCursor;
+        newDataId = dataId;
+    }
+
+    if (getActivePageId() != tabIndex || dataId != newDataId || dataCursor != newDataCursor) {
+        if (getActivePageId() == tabIndex) {
+            if (numeric_keypad::isEditing()) {
+                sound::playBeep();
+                return;
+            }
         }
+
+        dataCursor = newDataCursor;
+        dataId = newDataId;
 
         editValue = data::currentSnapshot.get(dataCursor, dataId);
         undoValue = editValue;

@@ -4557,12 +4557,150 @@
               "style": "default_inverse"
             },
             {
-              "type": "Local.Channels",
+              "type": "Container",
               "x": 252,
               "y": 0,
               "width": 68,
               "height": 204,
-              "style": "default"
+              "style": "default",
+              "widgets": [
+                {
+                  "type": "List",
+                  "data": "channels",
+                  "x": 0,
+                  "y": 0,
+                  "width": 64,
+                  "height": 204,
+                  "style": "default",
+                  "listType": "vertical",
+                  "itemWidget": {
+                    "type": "Select",
+                    "data": "channel.status",
+                    "x": 0,
+                    "y": 0,
+                    "width": 64,
+                    "height": 112,
+                    "style": "default",
+                    "widgets": [
+                      {
+                        "type": "Rectangle",
+                        "x": 0,
+                        "y": 0,
+                        "width": 64,
+                        "height": 92,
+                        "style": "default_inverse"
+                      },
+                      {
+                        "type": "Container",
+                        "x": 0,
+                        "y": 0,
+                        "width": 64,
+                        "height": 112,
+                        "style": "default",
+                        "widgets": [
+                          {
+                            "type": "Select",
+                            "data": "channel.outputState",
+                            "x": 0,
+                            "y": 0,
+                            "width": 64,
+                            "height": 32,
+                            "style": "default",
+                            "widgets": [
+                              {
+                                "type": "Text",
+                                "x": 0,
+                                "y": 0,
+                                "width": 64,
+                                "height": 32,
+                                "style": "edit_value_S_right",
+                                "text": "OFF"
+                              },
+                              {
+                                "type": "Select",
+                                "data": "channel.outputMode",
+                                "x": 0,
+                                "y": 0,
+                                "width": 64,
+                                "height": 32,
+                                "style": "default",
+                                "widgets": [
+                                  {
+                                    "type": "DisplayData",
+                                    "data": "channel.monValue",
+                                    "x": 0,
+                                    "y": 0,
+                                    "width": 64,
+                                    "height": 32,
+                                    "style": "edit_value_S_right",
+                                    "activeStyle": ""
+                                  },
+                                  {
+                                    "type": "DisplayData",
+                                    "data": "channel.monValue",
+                                    "x": 0,
+                                    "y": 0,
+                                    "width": 64,
+                                    "height": 32,
+                                    "style": "edit_value_ur_S_right",
+                                    "activeStyle": ""
+                                  }
+                                ]
+                              }
+                            ]
+                          },
+                          {
+                            "type": "DisplayData",
+                            "data": "channel.u.set",
+                            "action": "edit",
+                            "x": 0,
+                            "y": 32,
+                            "width": 64,
+                            "height": 30,
+                            "style": "edit_value_S_right",
+                            "activeStyle": "edit_value_active_S_right"
+                          },
+                          {
+                            "type": "DisplayData",
+                            "data": "channel.i.set",
+                            "action": "edit",
+                            "x": 0,
+                            "y": 62,
+                            "width": 64,
+                            "height": 30,
+                            "style": "edit_value_S_right",
+                            "activeStyle": "edit_value_active_S_right"
+                          }
+                        ]
+                      },
+                      {
+                        "type": "Rectangle",
+                        "x": 0,
+                        "y": 0,
+                        "width": 64,
+                        "height": 92,
+                        "style": "default_inverse"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "type": "Rectangle",
+                  "x": 0,
+                  "y": 92,
+                  "width": 64,
+                  "height": 20,
+                  "style": "default_inverse"
+                },
+                {
+                  "type": "Rectangle",
+                  "x": 64,
+                  "y": 0,
+                  "width": 4,
+                  "height": 204,
+                  "style": "default_inverse"
+                }
+              ]
             }
           ]
         }
@@ -15084,7 +15222,7 @@
                 "x": 0,
                 "y": 0,
                 "width": 162,
-                "height": 128,
+                "height": 130,
                 "style": "channel_off_landscape",
                 "text": "OFF"
               },
