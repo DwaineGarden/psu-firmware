@@ -51,6 +51,7 @@ bool setType(Type value) {
             }
             if (channel.getFeatures() & CH_FEATURE_LRIPPLE) {
                 channel.lowRippleEnable(false);
+                channel.lowRippleAutoEnable(false);
             }
 
             channel.setVoltage(getUMin(channel));
