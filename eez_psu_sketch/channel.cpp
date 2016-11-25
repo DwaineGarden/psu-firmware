@@ -855,13 +855,13 @@ void Channel::doOutputEnable(bool enable) {
         }
 
 		// disable DP
-        if (channel_coupling::getType() == channel_coupling::TYPE_NONE) {
+        if (channel_coupling::getType() == channel_coupling::TYPE_PARALLEL) {
+            // channel is coupled in parallel, disable DP immediatelly
+            doDpEnable(false);
+        } else {
             // delayed
             delayed_dp_off = true;
             delayed_dp_off_start = micros();
-        } else {
-            // channel is coupled, disable DP immediatelly
-            doDpEnable(false);
         }
 	}
 
