@@ -3782,13 +3782,55 @@
                       "style": "default",
                       "widgets": [
                         {
+                          "type": "Text",
+                          "x": 0,
+                          "y": 0,
+                          "width": 132,
+                          "height": 38,
+                          "style": "edit_value_S_centered",
+                          "text": "Coupling mode:"
+                        },
+                        {
+                          "type": "Text",
+                          "x": 132,
+                          "y": 0,
+                          "width": 177,
+                          "height": 38,
+                          "style": "coupled_info",
+                          "text": "Parallel"
+                        },
+                        {
+                          "type": "Rectangle",
+                          "x": 309,
+                          "y": 0,
+                          "width": 11,
+                          "height": 38,
+                          "style": "default_inverse"
+                        },
+                        {
+                          "type": "Rectangle",
+                          "x": 0,
+                          "y": 38,
+                          "width": 208,
+                          "height": 18,
+                          "style": "default_inverse"
+                        },
+                        {
+                          "type": "Rectangle",
+                          "x": 208,
+                          "y": 38,
+                          "width": 112,
+                          "height": 10,
+                          "style": "default_inverse"
+                        },
+                        {
                           "type": "Select",
                           "data": "channel.outputState",
                           "action": "",
-                          "x": 0,
-                          "y": 0,
+                          "x": 48,
+                          "y": 56,
                           "width": 160,
-                          "height": 56,
+                          "height": 82,
                           "style": "default",
                           "widgets": [
                             {
@@ -3797,7 +3839,7 @@
                               "x": 0,
                               "y": 0,
                               "width": 160,
-                              "height": 56,
+                              "height": 82,
                               "style": "channel_off_landscape",
                               "text": "OFF"
                             },
@@ -3807,7 +3849,7 @@
                               "x": 0,
                               "y": 0,
                               "width": 160,
-                              "height": 56,
+                              "height": 82,
                               "style": "default",
                               "widgets": [
                                 {
@@ -3817,7 +3859,7 @@
                                   "x": 0,
                                   "y": 0,
                                   "width": 160,
-                                  "height": 56,
+                                  "height": 82,
                                   "style": "mon_value_landscape_L_right"
                                 },
                                 {
@@ -3827,7 +3869,7 @@
                                   "x": 0,
                                   "y": 0,
                                   "width": 160,
-                                  "height": 56,
+                                  "height": 82,
                                   "style": "mon_value_ur_landscape_L_right"
                                 }
                               ]
@@ -4018,10 +4060,10 @@
                         {
                           "type": "Select",
                           "data": "channel.rprog.status",
-                          "x": 48,
-                          "y": 56,
+                          "x": 208,
+                          "y": 48,
                           "width": 112,
-                          "height": 43,
+                          "height": 40,
                           "style": "default",
                           "widgets": [
                             {
@@ -4031,7 +4073,7 @@
                               "x": 0,
                               "y": 0,
                               "width": 112,
-                              "height": 43,
+                              "height": 40,
                               "style": "mon_value"
                             },
                             {
@@ -4041,7 +4083,7 @@
                               "x": 0,
                               "y": 0,
                               "width": 112,
-                              "height": 43,
+                              "height": 40,
                               "style": "mon_dac"
                             }
                           ]
@@ -4050,30 +4092,38 @@
                           "type": "DisplayData",
                           "data": "channel.i.set",
                           "action": "edit",
-                          "x": 48,
-                          "y": 99,
+                          "x": 208,
+                          "y": 88,
                           "width": 112,
                           "height": 40,
                           "style": "mon_value"
+                        },
+                        {
+                          "type": "DisplayData",
+                          "data": "channel.p.mon",
+                          "x": 208,
+                          "y": 128,
+                          "width": 112,
+                          "height": 40,
+                          "style": "default"
                         },
                         {
                           "type": "Text",
                           "action": "show_channel_settings",
                           "x": 48,
                           "y": 138,
-                          "width": 112,
-                          "height": 38,
+                          "width": 160,
+                          "height": 30,
                           "style": "edit_S",
                           "text": "`  Settings"
                         },
                         {
-                          "type": "Text",
-                          "x": 160,
-                          "y": 0,
-                          "width": 160,
-                          "height": 176,
-                          "style": "default",
-                          "text": "Parallel"
+                          "type": "Rectangle",
+                          "x": 48,
+                          "y": 168,
+                          "width": 272,
+                          "height": 8,
+                          "style": "default_inverse"
                         }
                       ]
                     },
@@ -4087,22 +4137,46 @@
                       "widgets": [
                         {
                           "type": "Text",
-                          "action": "show_channel_settings",
                           "x": 0,
                           "y": 0,
-                          "width": 55,
-                          "height": 58,
-                          "style": "edit_S",
-                          "text": "` Set"
+                          "width": 132,
+                          "height": 38,
+                          "style": "edit_value_S_centered",
+                          "text": "Coupling mode:"
+                        },
+                        {
+                          "type": "Text",
+                          "x": 132,
+                          "y": 0,
+                          "width": 177,
+                          "height": 38,
+                          "style": "coupled_info",
+                          "text": "Parallel"
+                        },
+                        {
+                          "type": "Rectangle",
+                          "x": 309,
+                          "y": 0,
+                          "width": 11,
+                          "height": 38,
+                          "style": "default_inverse"
+                        },
+                        {
+                          "type": "Rectangle",
+                          "x": 0,
+                          "y": 38,
+                          "width": 320,
+                          "height": 5,
+                          "style": "default_inverse"
                         },
                         {
                           "type": "Select",
                           "data": "channel.outputState",
                           "action": "",
-                          "x": 55,
-                          "y": 0,
-                          "width": 200,
-                          "height": 58,
+                          "x": 0,
+                          "y": 43,
+                          "width": 216,
+                          "height": 106,
                           "style": "default",
                           "widgets": [
                             {
@@ -4110,8 +4184,8 @@
                               "action": "toggle_channel",
                               "x": 0,
                               "y": 0,
-                              "width": 200,
-                              "height": 58,
+                              "width": 216,
+                              "height": 106,
                               "style": "channel_off_landscape",
                               "text": "OFF"
                             },
@@ -4120,16 +4194,16 @@
                               "data": "channel.outputMode",
                               "x": 0,
                               "y": 0,
-                              "width": 200,
-                              "height": 58,
+                              "width": 216,
+                              "height": 106,
                               "style": "default",
                               "widgets": [
                                 {
                                   "type": "Container",
                                   "x": 0,
                                   "y": 0,
-                                  "width": 200,
-                                  "height": 58,
+                                  "width": 216,
+                                  "height": 106,
                                   "style": "default",
                                   "widgets": [
                                     {
@@ -4138,8 +4212,8 @@
                                       "action": "toggle_channel",
                                       "x": 0,
                                       "y": 0,
-                                      "width": 200,
-                                      "height": 28,
+                                      "width": 216,
+                                      "height": 50,
                                       "style": "bar_graph_U_defualt",
                                       "orientation": "left-right",
                                       "textStyle": "bar_graph_text",
@@ -4151,9 +4225,9 @@
                                     {
                                       "type": "Rectangle",
                                       "x": 0,
-                                      "y": 28,
-                                      "width": 200,
-                                      "height": 2,
+                                      "y": 50,
+                                      "width": 216,
+                                      "height": 6,
                                       "style": "default_inverse"
                                     },
                                     {
@@ -4161,9 +4235,9 @@
                                       "data": "channel.i.mon",
                                       "action": "toggle_channel",
                                       "x": 0,
-                                      "y": 30,
-                                      "width": 200,
-                                      "height": 28,
+                                      "y": 56,
+                                      "width": 216,
+                                      "height": 50,
                                       "style": "bar_graph_I_default",
                                       "orientation": "left-right",
                                       "textStyle": "bar_graph_text",
@@ -4178,8 +4252,8 @@
                                   "type": "Container",
                                   "x": 0,
                                   "y": 0,
-                                  "width": 200,
-                                  "height": 58,
+                                  "width": 216,
+                                  "height": 106,
                                   "style": "default",
                                   "widgets": [
                                     {
@@ -4188,8 +4262,8 @@
                                       "action": "toggle_channel",
                                       "x": 0,
                                       "y": 0,
-                                      "width": 200,
-                                      "height": 28,
+                                      "width": 216,
+                                      "height": 50,
                                       "style": "bar_graph_unregulated",
                                       "orientation": "left-right",
                                       "textStyle": "bar_graph_text",
@@ -4201,9 +4275,9 @@
                                     {
                                       "type": "Rectangle",
                                       "x": 0,
-                                      "y": 28,
-                                      "width": 200,
-                                      "height": 2,
+                                      "y": 50,
+                                      "width": 216,
+                                      "height": 6,
                                       "style": "default_inverse"
                                     },
                                     {
@@ -4211,9 +4285,9 @@
                                       "data": "channel.i.mon",
                                       "action": "toggle_channel",
                                       "x": 0,
-                                      "y": 30,
-                                      "width": 200,
-                                      "height": 28,
+                                      "y": 56,
+                                      "width": 216,
+                                      "height": 50,
                                       "style": "bar_graph_unregulated",
                                       "orientation": "left-right",
                                       "textStyle": "bar_graph_text",
@@ -4231,10 +4305,10 @@
                         {
                           "type": "Select",
                           "data": "channel.rprog.status",
-                          "x": 255,
-                          "y": 0,
-                          "width": 65,
-                          "height": 28,
+                          "x": 216,
+                          "y": 43,
+                          "width": 104,
+                          "height": 36,
                           "style": "default",
                           "widgets": [
                             {
@@ -4243,9 +4317,9 @@
                               "action": "edit",
                               "x": 0,
                               "y": 0,
-                              "width": 65,
-                              "height": 28,
-                              "style": "edit_value_active_S_right"
+                              "width": 104,
+                              "height": 36,
+                              "style": "edit_value_active"
                             },
                             {
                               "type": "DisplayData",
@@ -4253,43 +4327,46 @@
                               "action": "",
                               "x": 0,
                               "y": 0,
-                              "width": 65,
-                              "height": 28,
-                              "style": "mon_dac_S"
+                              "width": 104,
+                              "height": 36,
+                              "style": "mon_dac"
                             }
                           ]
-                        },
-                        {
-                          "type": "Rectangle",
-                          "x": 255,
-                          "y": 28,
-                          "width": 65,
-                          "height": 2,
-                          "style": "default_inverse"
                         },
                         {
                           "type": "DisplayData",
                           "data": "channel.i.set",
                           "action": "edit",
-                          "x": 255,
-                          "y": 30,
-                          "width": 65,
-                          "height": 28,
-                          "style": "edit_value_active_S_right"
+                          "x": 216,
+                          "y": 79,
+                          "width": 104,
+                          "height": 36,
+                          "style": "edit_value_active"
                         },
                         {
-                          "type": "Rectangle",
+                          "type": "DisplayData",
+                          "data": "channel.p.mon",
+                          "x": 216,
+                          "y": 115,
+                          "width": 104,
+                          "height": 36,
+                          "style": "edit_value"
+                        },
+                        {
+                          "type": "Text",
+                          "action": "show_channel_settings",
                           "x": 0,
-                          "y": 58,
-                          "width": 255,
-                          "height": 3,
-                          "style": "default_inverse"
+                          "y": 152,
+                          "width": 80,
+                          "height": 24,
+                          "style": "edit_S",
+                          "text": "` Set"
                         },
                         {
                           "type": "Select",
                           "data": "lrip",
-                          "x": 0,
-                          "y": 61,
+                          "x": 80,
+                          "y": 152,
                           "width": 48,
                           "height": 24,
                           "style": "default",
@@ -4317,8 +4394,8 @@
                         {
                           "type": "Select",
                           "data": "ocp",
-                          "x": 48,
-                          "y": 61,
+                          "x": 128,
+                          "y": 152,
                           "width": 48,
                           "height": 24,
                           "style": "default",
@@ -4355,8 +4432,8 @@
                         {
                           "type": "Select",
                           "data": "ovp",
-                          "x": 96,
-                          "y": 61,
+                          "x": 176,
+                          "y": 152,
                           "width": 48,
                           "height": 24,
                           "style": "default",
@@ -4393,8 +4470,8 @@
                         {
                           "type": "Select",
                           "data": "otp",
-                          "x": 144,
-                          "y": 61,
+                          "x": 224,
+                          "y": 152,
                           "width": 48,
                           "height": 24,
                           "style": "default",
@@ -4431,8 +4508,8 @@
                         {
                           "type": "Select",
                           "data": "opp",
-                          "x": 192,
-                          "y": 61,
+                          "x": 272,
+                          "y": 152,
                           "width": 48,
                           "height": 24,
                           "style": "default",
@@ -4469,44 +4546,10 @@
                         {
                           "type": "Rectangle",
                           "x": 0,
-                          "y": 85,
-                          "width": 255,
+                          "y": 149,
+                          "width": 320,
                           "height": 3,
                           "style": "default_inverse"
-                        },
-                        {
-                          "type": "Rectangle",
-                          "x": 240,
-                          "y": 58,
-                          "width": 15,
-                          "height": 30,
-                          "style": "default_inverse"
-                        },
-                        {
-                          "type": "DisplayData",
-                          "data": "channel.p.mon",
-                          "x": 240,
-                          "y": 60,
-                          "width": 80,
-                          "height": 28,
-                          "style": "edit_value_S_right"
-                        },
-                        {
-                          "type": "Rectangle",
-                          "x": 255,
-                          "y": 58,
-                          "width": 65,
-                          "height": 2,
-                          "style": "default_inverse"
-                        },
-                        {
-                          "type": "Text",
-                          "x": 0,
-                          "y": 88,
-                          "width": 320,
-                          "height": 88,
-                          "style": "default",
-                          "text": "Parallel"
                         }
                       ]
                     },
@@ -4520,38 +4563,54 @@
                       "widgets": [
                         {
                           "type": "Text",
-                          "action": "show_channel_settings",
                           "x": 0,
                           "y": 0,
-                          "width": 48,
-                          "height": 30,
-                          "style": "edit_S",
-                          "text": "` Set"
+                          "width": 132,
+                          "height": 38,
+                          "style": "edit_value_S_centered",
+                          "text": "Coupling mode:"
+                        },
+                        {
+                          "type": "Text",
+                          "x": 132,
+                          "y": 0,
+                          "width": 177,
+                          "height": 38,
+                          "style": "coupled_info",
+                          "text": "Parallel"
                         },
                         {
                           "type": "Rectangle",
-                          "x": 47,
+                          "x": 309,
                           "y": 0,
-                          "width": 2,
-                          "height": 148,
+                          "width": 11,
+                          "height": 38,
                           "style": "default_inverse"
                         },
                         {
                           "type": "Rectangle",
-                          "x": 159,
-                          "y": 0,
-                          "width": 1,
-                          "height": 176,
+                          "x": 0,
+                          "y": 38,
+                          "width": 320,
+                          "height": 4,
+                          "style": "default_inverse"
+                        },
+                        {
+                          "type": "Rectangle",
+                          "x": 0,
+                          "y": 42,
+                          "width": 62,
+                          "height": 10,
                           "style": "default_inverse"
                         },
                         {
                           "type": "Select",
                           "data": "channel.outputState",
                           "action": "",
-                          "x": 49,
-                          "y": 28,
-                          "width": 110,
-                          "height": 148,
+                          "x": 54,
+                          "y": 42,
+                          "width": 158,
+                          "height": 129,
                           "style": "default",
                           "widgets": [
                             {
@@ -4559,8 +4618,8 @@
                               "action": "toggle_channel",
                               "x": 0,
                               "y": 0,
-                              "width": 110,
-                              "height": 124,
+                              "width": 162,
+                              "height": 128,
                               "style": "channel_off_landscape",
                               "text": "OFF"
                             },
@@ -4569,26 +4628,26 @@
                               "data": "channel.outputMode",
                               "x": 0,
                               "y": 0,
-                              "width": 110,
-                              "height": 124,
+                              "width": 162,
+                              "height": 128,
                               "style": "default",
                               "widgets": [
                                 {
                                   "type": "Container",
                                   "x": 0,
                                   "y": 0,
-                                  "width": 110,
-                                  "height": 124,
+                                  "width": 162,
+                                  "height": 128,
                                   "style": "default",
                                   "widgets": [
                                     {
                                       "type": "BarGraph",
                                       "data": "channel.u.mon",
                                       "action": "toggle_channel",
-                                      "x": 0,
+                                      "x": 8,
                                       "y": 0,
-                                      "width": 54,
-                                      "height": 124,
+                                      "width": 70,
+                                      "height": 128,
                                       "style": "bar_graph_U_defualt",
                                       "orientation": "bottom-top",
                                       "textStyle": "bar_graph_text_vertical",
@@ -4599,20 +4658,20 @@
                                     },
                                     {
                                       "type": "Rectangle",
-                                      "x": 54,
+                                      "x": 78,
                                       "y": 0,
-                                      "width": 2,
-                                      "height": 148,
+                                      "width": 10,
+                                      "height": 128,
                                       "style": "default_inverse"
                                     },
                                     {
                                       "type": "BarGraph",
                                       "data": "channel.i.mon",
                                       "action": "toggle_channel",
-                                      "x": 56,
+                                      "x": 88,
                                       "y": 0,
-                                      "width": 54,
-                                      "height": 124,
+                                      "width": 70,
+                                      "height": 128,
                                       "style": "bar_graph_I_default",
                                       "orientation": "bottom-top",
                                       "textStyle": "bar_graph_text_vertical",
@@ -4627,18 +4686,18 @@
                                   "type": "Container",
                                   "x": 0,
                                   "y": 0,
-                                  "width": 110,
-                                  "height": 124,
+                                  "width": 162,
+                                  "height": 128,
                                   "style": "default",
                                   "widgets": [
                                     {
                                       "type": "BarGraph",
                                       "data": "channel.u.mon",
                                       "action": "toggle_channel",
-                                      "x": 0,
+                                      "x": 8,
                                       "y": 0,
-                                      "width": 54,
-                                      "height": 124,
+                                      "width": 70,
+                                      "height": 128,
                                       "style": "bar_graph_unregulated",
                                       "orientation": "bottom-top",
                                       "textStyle": "bar_graph_text_vertical",
@@ -4649,20 +4708,20 @@
                                     },
                                     {
                                       "type": "Rectangle",
-                                      "x": 54,
+                                      "x": 78,
                                       "y": 0,
-                                      "width": 2,
-                                      "height": 148,
+                                      "width": 10,
+                                      "height": 128,
                                       "style": "default_inverse"
                                     },
                                     {
                                       "type": "BarGraph",
                                       "data": "channel.i.mon",
                                       "action": "toggle_channel",
-                                      "x": 56,
+                                      "x": 88,
                                       "y": 0,
-                                      "width": 54,
-                                      "height": 124,
+                                      "width": 70,
+                                      "height": 128,
                                       "style": "bar_graph_unregulated",
                                       "orientation": "bottom-top",
                                       "textStyle": "bar_graph_text_vertical",
@@ -4680,35 +4739,6 @@
                         {
                           "type": "Select",
                           "data": "lrip",
-                          "x": 0,
-                          "y": 28,
-                          "width": 48,
-                          "height": 24,
-                          "style": "default",
-                          "widgets": [
-                            {
-                              "type": "Text",
-                              "x": 0,
-                              "y": 0,
-                              "width": 48,
-                              "height": 24,
-                              "style": "prot_indicator_S",
-                              "text": "LRip"
-                            },
-                            {
-                              "type": "Text",
-                              "x": 0,
-                              "y": 0,
-                              "width": 48,
-                              "height": 24,
-                              "style": "prot_indicator_set_S",
-                              "text": "LRip"
-                            }
-                          ]
-                        },
-                        {
-                          "type": "Select",
-                          "data": "ocp",
                           "x": 0,
                           "y": 52,
                           "width": 48,
@@ -4722,6 +4752,35 @@
                               "width": 48,
                               "height": 24,
                               "style": "prot_indicator_S",
+                              "text": "LRip"
+                            },
+                            {
+                              "type": "Text",
+                              "x": 0,
+                              "y": 0,
+                              "width": 48,
+                              "height": 24,
+                              "style": "prot_indicator_set_S",
+                              "text": "LRip"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "Select",
+                          "data": "ocp",
+                          "x": 0,
+                          "y": 74,
+                          "width": 48,
+                          "height": 24,
+                          "style": "default",
+                          "widgets": [
+                            {
+                              "type": "Text",
+                              "x": 0,
+                              "y": 0,
+                              "width": 48,
+                              "height": 24,
+                              "style": "prot_indicator_S",
                               "text": "OCP"
                             },
                             {
@@ -4748,7 +4807,7 @@
                           "type": "Select",
                           "data": "ovp",
                           "x": 0,
-                          "y": 76,
+                          "y": 98,
                           "width": 48,
                           "height": 24,
                           "style": "default",
@@ -4786,7 +4845,7 @@
                           "type": "Select",
                           "data": "otp",
                           "x": 0,
-                          "y": 100,
+                          "y": 122,
                           "width": 48,
                           "height": 24,
                           "style": "default",
@@ -4824,7 +4883,7 @@
                           "type": "Select",
                           "data": "opp",
                           "x": 0,
-                          "y": 124,
+                          "y": 146,
                           "width": 48,
                           "height": 24,
                           "style": "default",
@@ -4860,28 +4919,27 @@
                         },
                         {
                           "type": "Rectangle",
-                          "x": 0,
-                          "y": 148,
-                          "width": 49,
-                          "height": 28,
+                          "x": 48,
+                          "y": 52,
+                          "width": 14,
+                          "height": 118,
                           "style": "default_inverse"
                         },
                         {
-                          "type": "DisplayData",
-                          "data": "channel.p.mon",
-                          "x": 49,
-                          "y": 0,
-                          "width": 110,
-                          "height": 28,
-                          "style": "edit_value_S_centered"
+                          "type": "Rectangle",
+                          "x": 212,
+                          "y": 42,
+                          "width": 4,
+                          "height": 128,
+                          "style": "default_inverse"
                         },
                         {
                           "type": "Select",
                           "data": "channel.rprog.status",
-                          "x": 48,
-                          "y": 152,
-                          "width": 55,
-                          "height": 24,
+                          "x": 216,
+                          "y": 42,
+                          "width": 104,
+                          "height": 36,
                           "style": "default",
                           "widgets": [
                             {
@@ -4890,9 +4948,9 @@
                               "action": "edit",
                               "x": 0,
                               "y": 0,
-                              "width": 55,
-                              "height": 24,
-                              "style": "edit_S"
+                              "width": 104,
+                              "height": 36,
+                              "style": "edit_value_active"
                             },
                             {
                               "type": "DisplayData",
@@ -4900,9 +4958,9 @@
                               "action": "",
                               "x": 0,
                               "y": 0,
-                              "width": 55,
-                              "height": 24,
-                              "style": "mon_dac_S"
+                              "width": 104,
+                              "height": 36,
+                              "style": "mon_dac"
                             }
                           ]
                         },
@@ -4918,12 +4976,21 @@
                         },
                         {
                           "type": "Text",
-                          "x": 160,
-                          "y": 0,
-                          "width": 160,
-                          "height": 176,
-                          "style": "default",
-                          "text": "Parallel"
+                          "action": "show_channel_settings",
+                          "x": 216,
+                          "y": 150,
+                          "width": 104,
+                          "height": 26,
+                          "style": "edit_S",
+                          "text": "` Settings"
+                        },
+                        {
+                          "type": "Rectangle",
+                          "x": 0,
+                          "y": 170,
+                          "width": 216,
+                          "height": 6,
+                          "style": "default_inverse"
                         }
                       ]
                     }
@@ -16694,6 +16761,16 @@
         "borderColor": "#D3D3D3",
         "paddingHorizontal": 0,
         "paddingVertical": 0
+      },
+      {
+        "name": "coupled_info",
+        "description": "Previous background color was: #52b5d3\nNew one was changed intentionally to test inheritance.",
+        "font": "medium",
+        "alignHorizontal": "center",
+        "color": "#FFFFFF",
+        "backgroundColor": "#ff0000",
+        "borderColor": "#D3D3D3",
+        "paddingHorizontal": 3
       },
       {
         "name": "default",
