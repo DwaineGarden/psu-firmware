@@ -41,7 +41,6 @@ struct ChannelSnapshotFlags {
     unsigned dp : 2;
 	unsigned cal_enabled: 1;
 	unsigned temperatureStatus: 2;
-    unsigned isUBalanced: 1;
 };
 
 struct ChannelSnapshot {
@@ -82,6 +81,7 @@ struct SnapshotFlags {
 	unsigned switch1: 1;
 	unsigned switch2: 1;
 	unsigned channelDisplayedValues: 3;
+    unsigned isUBalanced: 1;
 };
 
 struct Snapshot {

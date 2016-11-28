@@ -149,11 +149,15 @@ void Snapshot::takeSnapshot() {
 		channelSnapshots[i].flags.dp = channel.flags.dpOn ? 1 : 0;
 		
 		channelSnapshots[i].flags.cal_enabled = channel.isCalibrationEnabled() ? 1 : 0;
-
-        channelSnapshots[i].flags.isUBalanced = channel.isUBalanced();
     }
 
 	flags.channelDisplayedValues = persist_conf::dev_conf.flags.channelDisplayedValues;
+
+    if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
+        flags.isUBalanced = Channel::get(0).isUBalanced() || Channel::get(1).isUBalanced();
+    } else {
+        flags.isUBalanced = 0;
+    }
 
 	temperature::TempSensorTemperature &tempSensor = temperature::sensors[temp_sensor::MAIN];
 	if (!tempSensor.prot_conf.state) flags.otp = 0;
@@ -267,14 +271,14 @@ Value Snapshot::get(const Cursor &cursor, uint8_t id) {
 			if (id == DATA_ID_CHANNEL_SHORT_LABEL) {
 				return data::Value(iChannel + 1, data::VALUE_TYPE_CHANNEL_SHORT_LABEL);
 			}
-
-            if (id == DATA_ID_CHANNEL_U_IS_BALANCED) {
-                return data::Value(channelSnapshots[iChannel].flags.isUBalanced ? 0 : 1);
-            }
 		}
 	}
 	
-	if (id == DATA_ID_OTP) {
+    if (id == DATA_ID_CHANNEL_U_IS_BALANCED) {
+        return data::Value(flags.isUBalanced ? 0 : 1);
+    }
+
+    if (id == DATA_ID_OTP) {
         return Value(flags.otp);
     }
 	
