@@ -501,6 +501,8 @@ public:
 	/// Change power limit, it will adjust U_SET or I_SET if necessary.
 	void setPowerLimit(float limit);
 
+    bool isUBalanced() { return !util::isNaN(u_unbalanced); }
+
 private:
     bool delayed_dp_off;
     unsigned long delayed_dp_off_start;

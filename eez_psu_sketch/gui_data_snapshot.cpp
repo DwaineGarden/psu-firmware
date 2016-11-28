@@ -149,6 +149,8 @@ void Snapshot::takeSnapshot() {
 		channelSnapshots[i].flags.dp = channel.flags.dpOn ? 1 : 0;
 		
 		channelSnapshots[i].flags.cal_enabled = channel.isCalibrationEnabled() ? 1 : 0;
+
+        channelSnapshots[i].flags.isUBalanced = channel.isUBalanced();
     }
 
 	flags.channelDisplayedValues = persist_conf::dev_conf.flags.channelDisplayedValues;
@@ -265,6 +267,10 @@ Value Snapshot::get(const Cursor &cursor, uint8_t id) {
 			if (id == DATA_ID_CHANNEL_SHORT_LABEL) {
 				return data::Value(iChannel + 1, data::VALUE_TYPE_CHANNEL_SHORT_LABEL);
 			}
+
+            if (id == DATA_ID_CHANNEL_U_IS_BALANCED) {
+                return data::Value(channelSnapshots[iChannel].flags.isUBalanced ? 0 : 1);
+            }
 		}
 	}
 	
