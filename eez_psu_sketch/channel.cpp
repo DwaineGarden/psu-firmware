@@ -603,9 +603,13 @@ void Channel::tick(unsigned long tick_usec) {
                     if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
                         DebugTraceF("Channel balancing: CH1_Umon=%f, CH2_Umon=%f", Channel::get(0).u.mon, Channel::get(1).u.mon);
                         // channel balancing
-                        float uLoad = Channel::get(0).u.mon + Channel::get(1).u.mon;
                         Channel& channel = Channel::get(index == 1 ? 1 : 0);
-                        u_unbalanced = channel.u.set;
+
+                        if (util::isNaN(u_unbalanced)) {
+                            u_unbalanced = channel.u.set;
+                        }
+
+                        float uLoad = Channel::get(0).u.mon + Channel::get(1).u.mon;
                         channel.setVoltage(uLoad / 2);
                     }
                 }
@@ -1194,6 +1198,8 @@ void Channel::setVoltage(float value) {
     }
     dac.set_voltage(value);
 
+    u_unbalanced = NAN;
+
     profile::save();
 }
 
@@ -1206,9 +1212,9 @@ void Channel::setCurrent(float value) {
     }
     dac.set_current(value);
 
-    profile::save();
-
     restoreUnbalanced();
+
+    profile::save();
 }
 
 bool Channel::isCalibrationExists() {
