@@ -853,11 +853,9 @@ void Channel::doOutputEnable(bool enable) {
 			delayLowRippleCheck = true;
 		}
 
-        if (channel_coupling::getType() == channel_coupling::TYPE_NONE || index == 1) {
-    		// enable DP
-            delayed_dp_off = false;
-		    doDpEnable(true);
-        }
+    	// enable DP
+        delayed_dp_off = false;
+		doDpEnable(true);
 	} else {
 		if (getFeatures() & CH_FEATURE_LRIPPLE) {
 			doLowRippleEnable(false);
@@ -872,7 +870,7 @@ void Channel::doOutputEnable(bool enable) {
         }
 
 		// disable DP
-        if (channel_coupling::getType() == channel_coupling::TYPE_PARALLEL) {
+        if (channel_coupling::getType() == channel_coupling::TYPE_NONE) {
             // channel is coupled in parallel, disable DP immediatelly
             doDpEnable(false);
         } else {
