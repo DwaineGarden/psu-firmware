@@ -580,10 +580,12 @@ void Channel::tick(unsigned long tick_usec) {
         } else {
             if (tick_usec - dpNegMonitoringTime > DP_NEG_DELAY * 1000000UL) {
                 if (flags.dpOn) {
+                    DebugTraceF("CH%d, neg. P, DP off: %f", index, u.mon * i.mon);
                     dpNegMonitoringTime = tick_usec;
                     psu::generateError(SCPI_ERROR_CH1_DOWN_PROGRAMMER_SWITCHED_OFF + (index - 1));
                     doDpEnable(false);
                 } else {
+                    DebugTraceF("CH%d, neg. P, output off: %f", index, u.mon * i.mon);
                     psu::generateError(SCPI_ERROR_CH1_OUTPUT_FAULT_DETECTED - (index - 1));
                     channel_coupling::outputEnable(*this, false);
                 }
