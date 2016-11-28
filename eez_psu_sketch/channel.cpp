@@ -574,16 +574,44 @@ void Channel::tick(unsigned long tick_usec) {
     /// that is negative value in Watts (default -1 W),
     /// and that condition lasts more then DP_NEG_DELAY seconds (default 5 s),
     /// down-programmer circuit has to be switched off.
+    if (isOutputEnabled()) {
+        if (u.mon * i.mon >= DP_NEG_LEV) {
+            dpNegMonitoringTime = tick_usec;
+        } else {
+            if (tick_usec - dpNegMonitoringTime > DP_NEG_DELAY * 1000000UL) {
+                if (flags.dpOn) {
+                    dpNegMonitoringTime = tick_usec;
+                    psu::generateError(SCPI_ERROR_CH1_DOWN_PROGRAMMER_SWITCHED_OFF + (index - 1));
+                    doDpEnable(false);
+                } else {
+                    psu::generateError(SCPI_ERROR_CH1_OUTPUT_FAULT_DETECTED + (index - 1));
+                    doOutputEnable(false);
+                }
+            } else {
+                if (flags.dpOn) {
+                    if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
+                        // channel balancing
+                        float uLoad = Channel::get(0).u.mon + Channel::get(1).u.mon;
+                        Channel::get(index == 1 ? 1 : 0).setVoltage(uLoad / 2);
+                    }
+                }
+            }
+        }
+    }
+
     if (flags.dpOn) {
         if (u.mon * i.mon >= DP_NEG_LEV) {
             dpNegMonitoringTime = tick_usec;
         } else {
             if (tick_usec - dpNegMonitoringTime > DP_NEG_DELAY * 1000000UL) {
-                psu::generateError(SCPI_ERROR_CH1_DOWN_PROGRAMMER_SWITCHED_OFF + (index - 1));
-                doDpEnable(false);
+                if (flags.dpOn) {
+                    psu::generateError(SCPI_ERROR_CH1_DOWN_PROGRAMMER_SWITCHED_OFF + (index - 1));
+                    doDpEnable(false);
+                }
             }
         }
     }
+
 
 	// If channel output is off then test PWRGOOD here, otherwise it is tested in Channel::event method.
 #if !CONF_SKIP_PWRGOOD_TEST

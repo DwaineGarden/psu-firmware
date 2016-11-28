@@ -90,6 +90,8 @@ bool setType(Type value) {
         }
 
         bp::switchChannelCoupling(g_channelCoupling);
+
+        delay(100);
     }
 
     return true;
