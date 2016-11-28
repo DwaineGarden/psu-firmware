@@ -585,7 +585,7 @@ void Channel::tick(unsigned long tick_usec) {
                     doDpEnable(false);
                 } else {
                     psu::generateError(SCPI_ERROR_CH1_OUTPUT_FAULT_DETECTED + (index - 1));
-                    doOutputEnable(false);
+                    channel_coupling::outputEnable(*this, false);
                 }
             } else {
                 if (flags.dpOn) {
@@ -598,20 +598,6 @@ void Channel::tick(unsigned long tick_usec) {
             }
         }
     }
-
-    if (flags.dpOn) {
-        if (u.mon * i.mon >= DP_NEG_LEV) {
-            dpNegMonitoringTime = tick_usec;
-        } else {
-            if (tick_usec - dpNegMonitoringTime > DP_NEG_DELAY * 1000000UL) {
-                if (flags.dpOn) {
-                    psu::generateError(SCPI_ERROR_CH1_DOWN_PROGRAMMER_SWITCHED_OFF + (index - 1));
-                    doDpEnable(false);
-                }
-            }
-        }
-    }
-
 
 	// If channel output is off then test PWRGOOD here, otherwise it is tested in Channel::event method.
 #if !CONF_SKIP_PWRGOOD_TEST
