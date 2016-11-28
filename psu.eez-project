@@ -1319,7 +1319,7 @@
       "defaultValue": "5025"
     },
     {
-      "name": "channel.u.isBalanced",
+      "name": "channel.isVoltageBalanced",
       "type": "boolean",
       "defaultValue": "0"
     }
@@ -15432,7 +15432,7 @@
           },
           {
             "type": "Select",
-            "data": "channel.u.isBalanced",
+            "data": "channel.isVoltageBalanced",
             "x": 203,
             "y": 10,
             "width": 117,
@@ -15452,7 +15452,7 @@
               {
                 "type": "DisplayData",
                 "data": "channel.u.set",
-                "action": "",
+                "action": "edit",
                 "x": 0,
                 "y": 0,
                 "width": 117,
@@ -15672,7 +15672,7 @@
           },
           {
             "type": "Select",
-            "data": "channel.u.isBalanced",
+            "data": "channel.isVoltageBalanced",
             "x": 203,
             "y": 4,
             "width": 117,
@@ -15692,7 +15692,7 @@
               {
                 "type": "DisplayData",
                 "data": "channel.u.set",
-                "action": "",
+                "action": "edit",
                 "x": 0,
                 "y": 0,
                 "width": 117,
@@ -16274,7 +16274,7 @@
           },
           {
             "type": "Select",
-            "data": "channel.u.isBalanced",
+            "data": "channel.isVoltageBalanced",
             "x": 203,
             "y": 4,
             "width": 117,
@@ -16294,7 +16294,7 @@
               {
                 "type": "DisplayData",
                 "data": "channel.u.set",
-                "action": "",
+                "action": "edit",
                 "x": 0,
                 "y": 0,
                 "width": 117,
@@ -16991,7 +16991,7 @@
         "alignHorizontal": "center",
         "alignVertical": "center",
         "color": "#FFFF00",
-        "backgroundColor": "#ff5155",
+        "backgroundColor": "#ff0000",
         "borderSize": 0,
         "borderColor": "#D3D3D3",
         "paddingHorizontal": 0,

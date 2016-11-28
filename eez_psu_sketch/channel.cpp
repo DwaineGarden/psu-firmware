@@ -280,7 +280,7 @@ Channel::Channel(
     }
 #endif
 
-    u_unbalanced = NAN;
+    uBeforeBalancing = NAN;
 }
 
 void Channel::protectionEnter(ProtectionValue &cpv) {
@@ -557,10 +557,11 @@ bool Channel::isOk() {
     return psu::isPowerUp() && isPowerOk() && isTestOk();
 }
 
-void Channel::restoreUnbalanced() {
-    if (!util::isNaN(u_unbalanced)) {
-        setVoltage(u_unbalanced);
-        u_unbalanced = NAN;
+void Channel::restoreVoltageToValueBeforeBalancing() {
+    if (!util::isNaN(uBeforeBalancing)) {
+        DebugTraceF("Restore U to value before balancing: %f", uBeforeBalancing);
+        setVoltage(uBeforeBalancing);
+        uBeforeBalancing = NAN;
     }
 }
 
@@ -605,8 +606,8 @@ void Channel::tick(unsigned long tick_usec) {
                         // channel balancing
                         Channel& channel = Channel::get(index == 1 ? 1 : 0);
 
-                        if (util::isNaN(u_unbalanced)) {
-                            u_unbalanced = channel.u.set;
+                        if (util::isNaN(uBeforeBalancing)) {
+                            uBeforeBalancing = channel.u.set;
                         }
 
                         float uLoad = Channel::get(0).u.mon + Channel::get(1).u.mon;
@@ -782,7 +783,7 @@ void Channel::setCvMode(bool cv_mode) {
         setOperBits(OPER_ISUM_CV, cv_mode);
         setQuesBits(QUES_ISUM_CURR, cv_mode);
 
-        restoreUnbalanced();
+        restoreVoltageToValueBeforeBalancing();
     }
 }
 
@@ -877,7 +878,7 @@ void Channel::doOutputEnable(bool enable) {
         delayed_dp_off = false;
 		doDpEnable(true);
 
-        restoreUnbalanced();
+        restoreVoltageToValueBeforeBalancing();
 	} else {
 		if (getFeatures() & CH_FEATURE_LRIPPLE) {
 			doLowRippleEnable(false);
@@ -1198,7 +1199,7 @@ void Channel::setVoltage(float value) {
     }
     dac.set_voltage(value);
 
-    u_unbalanced = NAN;
+    uBeforeBalancing = NAN;
 
     profile::save();
 }
@@ -1212,7 +1213,7 @@ void Channel::setCurrent(float value) {
     }
     dac.set_current(value);
 
-    restoreUnbalanced();
+    restoreVoltageToValueBeforeBalancing();
 
     profile::save();
 }

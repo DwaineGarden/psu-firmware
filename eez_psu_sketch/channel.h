@@ -501,7 +501,7 @@ public:
 	/// Change power limit, it will adjust U_SET or I_SET if necessary.
 	void setPowerLimit(float limit);
 
-    bool isUBalanced() { return !util::isNaN(u_unbalanced); }
+    bool isVoltageBalanced() { return !util::isNaN(uBeforeBalancing); }
 
 private:
     bool delayed_dp_off;
@@ -519,7 +519,7 @@ private:
     float I_DEF;
     float I_MAX;
 
-    float u_unbalanced;
+    float uBeforeBalancing;
 
 	MaxCurrentLimitCause maxCurrentLimitCause;
 
@@ -537,7 +537,7 @@ private:
 
 	void adcDataIsReady(int16_t data);
     
-    void restoreUnbalanced();
+    void restoreVoltageToValueBeforeBalancing();
 
 	void setCcMode(bool cc_mode);
     void setCvMode(bool cv_mode);

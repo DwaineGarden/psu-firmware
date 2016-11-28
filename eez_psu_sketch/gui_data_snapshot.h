@@ -81,7 +81,7 @@ struct SnapshotFlags {
 	unsigned switch1: 1;
 	unsigned switch2: 1;
 	unsigned channelDisplayedValues: 3;
-    unsigned isUBalanced: 1;
+    unsigned isVoltageBalanced: 1;
 };
 
 struct Snapshot {

@@ -154,9 +154,9 @@ void Snapshot::takeSnapshot() {
 	flags.channelDisplayedValues = persist_conf::dev_conf.flags.channelDisplayedValues;
 
     if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
-        flags.isUBalanced = Channel::get(0).isUBalanced() || Channel::get(1).isUBalanced();
+        flags.isVoltageBalanced = Channel::get(0).isVoltageBalanced() || Channel::get(1).isVoltageBalanced() ? 1 : 0;
     } else {
-        flags.isUBalanced = 0;
+        flags.isVoltageBalanced = 0;
     }
 
 	temperature::TempSensorTemperature &tempSensor = temperature::sensors[temp_sensor::MAIN];
@@ -274,8 +274,8 @@ Value Snapshot::get(const Cursor &cursor, uint8_t id) {
 		}
 	}
 	
-    if (id == DATA_ID_CHANNEL_U_IS_BALANCED) {
-        return data::Value(flags.isUBalanced ? 0 : 1);
+    if (id == DATA_ID_CHANNEL_IS_VOLTAGE_BALANCED) {
+        return data::Value(flags.isVoltageBalanced);
     }
 
     if (id == DATA_ID_OTP) {
