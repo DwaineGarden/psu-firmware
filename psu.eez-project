@@ -16715,6 +16715,18 @@
         "paddingVertical": 0
       },
       {
+        "name": "edit_value_focus_S_right",
+        "inheritFrom": "default",
+        "font": "small",
+        "alignHorizontal": "right",
+        "alignVertical": "center",
+        "color": "#c8e7f0",
+        "borderSize": 0,
+        "borderColor": "#D3D3D3",
+        "paddingHorizontal": 0,
+        "paddingVertical": 0
+      },
+      {
         "name": "edit_value_L",
         "inheritFrom": "default",
         "font": "large",
@@ -16801,7 +16813,7 @@
       {
         "name": "error_alert",
         "inheritFrom": "default_S",
-        "backgroundColor": "#e02020"
+        "backgroundColor": "#f78000"
       },
       {
         "name": "error_alert_button",
@@ -16837,19 +16849,19 @@
       {
         "name": "yes_no",
         "inheritFrom": "default_S",
-        "backgroundColor": "#e02020"
+        "backgroundColor": "#f78000"
       },
       {
         "name": "yes_no_background",
         "inheritFrom": "default_S",
-        "color": "#e02020",
-        "backgroundColor": "#e02020"
+        "color": "#f78000",
+        "backgroundColor": "#f78000"
       },
       {
         "name": "yes_no_message",
         "inheritFrom": "default_S",
         "color": "#c0c0c0",
-        "backgroundColor": "#e02020"
+        "backgroundColor": "#f78000"
       },
       {
         "name": "yes_no_button",
@@ -16902,6 +16914,12 @@
         "font": "icons"
       },
       {
+        "name": "max_current_limit_cause",
+        "inheritFrom": "default_S",
+        "alignHorizontal": "left",
+        "color": "#ff0000"
+      },
+      {
         "name": "menu_S",
         "inheritFrom": "default",
         "font": "small",
@@ -16911,6 +16929,23 @@
         "borderSize": 0,
         "paddingHorizontal": 0,
         "paddingVertical": 0
+      },
+      {
+        "name": "mon_dac",
+        "inheritFrom": "default",
+        "font": "medium",
+        "alignHorizontal": "center",
+        "alignVertical": "center",
+        "color": "#ff0000",
+        "borderSize": 0,
+        "borderColor": "#D3D3D3",
+        "paddingHorizontal": 0,
+        "paddingVertical": 0
+      },
+      {
+        "name": "mon_dac_S",
+        "inheritFrom": "mon_dac",
+        "font": "small"
       },
       {
         "name": "mon_value",
@@ -16985,19 +17020,6 @@
         "paddingVertical": 0
       },
       {
-        "name": "set_value_balanced",
-        "inheritFrom": "default",
-        "font": "medium",
-        "alignHorizontal": "center",
-        "alignVertical": "center",
-        "color": "#FFFF00",
-        "backgroundColor": "#ff0000",
-        "borderSize": 0,
-        "borderColor": "#D3D3D3",
-        "paddingHorizontal": 0,
-        "paddingVertical": 0
-      },
-      {
         "name": "non_interactive_button_S",
         "font": "small",
         "alignHorizontal": "center",
@@ -17046,6 +17068,19 @@
         "alignVertical": "center",
         "color": "#ffffff",
         "backgroundColor": "#ff0000",
+        "borderSize": 0,
+        "borderColor": "#D3D3D3",
+        "paddingHorizontal": 0,
+        "paddingVertical": 0
+      },
+      {
+        "name": "set_value_balanced",
+        "inheritFrom": "default",
+        "font": "medium",
+        "alignHorizontal": "center",
+        "alignVertical": "center",
+        "color": "#00ff80",
+        "backgroundColor": "#5080ff",
         "borderSize": 0,
         "borderColor": "#D3D3D3",
         "paddingHorizontal": 0,
@@ -17142,41 +17177,6 @@
         "name": "yellow_6",
         "inheritFrom": "default",
         "color": "#ffffe5"
-      },
-      {
-        "name": "mon_dac",
-        "inheritFrom": "default",
-        "font": "medium",
-        "alignHorizontal": "center",
-        "alignVertical": "center",
-        "color": "#ff0000",
-        "borderSize": 0,
-        "borderColor": "#D3D3D3",
-        "paddingHorizontal": 0,
-        "paddingVertical": 0
-      },
-      {
-        "name": "mon_dac_S",
-        "inheritFrom": "mon_dac",
-        "font": "small"
-      },
-      {
-        "name": "max_current_limit_cause",
-        "inheritFrom": "default_S",
-        "alignHorizontal": "left",
-        "color": "#ff0000"
-      },
-      {
-        "name": "edit_value_focus_S_right",
-        "inheritFrom": "default",
-        "font": "small",
-        "alignHorizontal": "right",
-        "alignVertical": "center",
-        "color": "#c8e7f0",
-        "borderSize": 0,
-        "borderColor": "#D3D3D3",
-        "paddingHorizontal": 0,
-        "paddingVertical": 0
       }
     ],
     "fonts": [
