@@ -279,6 +279,8 @@ Channel::Channel(
         simulator.load = 20;
     }
 #endif
+
+    u_unbalanced = NAN;
 }
 
 void Channel::protectionEnter(ProtectionValue &cpv) {
@@ -555,6 +557,13 @@ bool Channel::isOk() {
     return psu::isPowerUp() && isPowerOk() && isTestOk();
 }
 
+void Channel::restoreUnbalanced() {
+    if (!util::isNaN(u_unbalanced)) {
+        setVoltage(u_unbalanced);
+        u_unbalanced = NAN;
+    }
+}
+
 void Channel::tick(unsigned long tick_usec) {
     ioexp.tick(tick_usec);
     adc.tick(tick_usec);
@@ -595,7 +604,9 @@ void Channel::tick(unsigned long tick_usec) {
                         DebugTraceF("Channel balancing: CH1_Umon=%f, CH2_Umon=%f", Channel::get(0).u.mon, Channel::get(1).u.mon);
                         // channel balancing
                         float uLoad = Channel::get(0).u.mon + Channel::get(1).u.mon;
-                        Channel::get(index == 1 ? 1 : 0).setVoltage(uLoad / 2);
+                        Channel& channel = Channel::get(index == 1 ? 1 : 0);
+                        u_unbalanced = channel.u.set;
+                        channel.setVoltage(uLoad / 2);
                     }
                 }
             }
@@ -766,6 +777,8 @@ void Channel::setCvMode(bool cv_mode) {
 
         setOperBits(OPER_ISUM_CV, cv_mode);
         setQuesBits(QUES_ISUM_CURR, cv_mode);
+
+        restoreUnbalanced();
     }
 }
 
@@ -859,6 +872,8 @@ void Channel::doOutputEnable(bool enable) {
     	// enable DP
         delayed_dp_off = false;
 		doDpEnable(true);
+
+        restoreUnbalanced();
 	} else {
 		if (getFeatures() & CH_FEATURE_LRIPPLE) {
 			doLowRippleEnable(false);
@@ -1192,6 +1207,8 @@ void Channel::setCurrent(float value) {
     dac.set_current(value);
 
     profile::save();
+
+    restoreUnbalanced();
 }
 
 bool Channel::isCalibrationExists() {

@@ -517,6 +517,8 @@ private:
     float I_DEF;
     float I_MAX;
 
+    float u_unbalanced;
+
 	MaxCurrentLimitCause maxCurrentLimitCause;
 
 	int negligibleAdcDiffForVoltage;
@@ -533,6 +535,8 @@ private:
 
 	void adcDataIsReady(int16_t data);
     
+    void restoreUnbalanced();
+
 	void setCcMode(bool cc_mode);
     void setCvMode(bool cv_mode);
     void updateCcAndCvSwitch();
