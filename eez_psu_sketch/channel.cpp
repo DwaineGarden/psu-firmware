@@ -584,7 +584,7 @@ void Channel::tick(unsigned long tick_usec) {
                     psu::generateError(SCPI_ERROR_CH1_DOWN_PROGRAMMER_SWITCHED_OFF + (index - 1));
                     doDpEnable(false);
                 } else {
-                    psu::generateError(SCPI_ERROR_CH1_OUTPUT_FAULT_DETECTED + (index - 1));
+                    psu::generateError(SCPI_ERROR_CH1_OUTPUT_FAULT_DETECTED - (index - 1));
                     channel_coupling::outputEnable(*this, false);
                 }
             } else {
