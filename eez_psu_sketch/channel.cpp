@@ -590,6 +590,7 @@ void Channel::tick(unsigned long tick_usec) {
             } else {
                 if (flags.dpOn) {
                     if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
+                        DebugTraceF("Channel balancing: CH1_Umon=%f, CH2_Umon=%f", Channel::get(0).u.mon, Channel::get(1).u.mon);
                         // channel balancing
                         float uLoad = Channel::get(0).u.mon + Channel::get(1).u.mon;
                         Channel::get(index == 1 ? 1 : 0).setVoltage(uLoad / 2);
