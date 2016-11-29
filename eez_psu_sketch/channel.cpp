@@ -875,8 +875,6 @@ void Channel::doOutputEnable(bool enable) {
         delayed_dp_off = false;
 		doDpEnable(true);
 
-        restoreVoltageToValueBeforeBalancing();
-        
         dpNegMonitoringTime = micros();
 	} else {
 		if (getFeatures() & CH_FEATURE_LRIPPLE) {
@@ -904,6 +902,8 @@ void Channel::doOutputEnable(bool enable) {
 
 	//interrupts();
 	//ioexp.enableWriteAndFlush();
+
+    restoreVoltageToValueBeforeBalancing();
 
 	if (enable) {
 		// start ADC conversion
