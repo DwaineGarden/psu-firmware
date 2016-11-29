@@ -853,6 +853,11 @@ void Channel::doDpEnable(bool enable) {
 }
 
 void Channel::doOutputEnable(bool enable) {
+    if (!psu::g_is_booted) {
+        flags.afterBootOutputEnabled = enable;
+        return;
+    }
+
     if (enable && !isOk()) {
         return;
     }
@@ -1017,6 +1022,12 @@ void Channel::outputEnable(bool enable) {
 		event_queue::pushEvent((enable ? event_queue::EVENT_INFO_CH1_OUTPUT_ENABLED :
 			event_queue::EVENT_INFO_CH1_OUTPUT_DISABLED) + index - 1);
 		profile::save();
+    }
+}
+
+void Channel::afterBootOutputEnable() {
+    if (flags.afterBootOutputEnabled) {
+        doOutputEnable(true);
     }
 }
 

@@ -56,7 +56,7 @@ namespace psu {
 
 using namespace scpi;
 
-static bool g_is_booted = false;
+bool g_is_booted = false;
 static bool g_power_is_up = false;
 static bool g_test_power_up_delay = false;
 static unsigned long g_power_down_time;
@@ -255,6 +255,12 @@ void boot() {
     */
 
     g_is_booted = true;
+
+    if (g_power_is_up) {
+        for (int i = 0; i < CH_NUM; ++i) {
+            Channel::get(i).afterBootOutputEnable();
+        }
+    }
 
 #if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4
 	watchdog::init();

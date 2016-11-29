@@ -141,6 +141,7 @@ public:
     /// Channel binary flags like output enabled, sense enabled, ...
     struct Flags {
         unsigned outputEnabled : 1;
+        unsigned afterBootOutputEnabled: 1;
         unsigned dpOn : 1;
         unsigned senseEnabled : 1;
         unsigned cvMode : 1;
@@ -376,6 +377,8 @@ public:
 
     /// Enable/disable channel output.
     void outputEnable(bool enable);
+
+    void afterBootOutputEnable();
 
     /// Is channel output enabled?
     bool isOutputEnabled();
