@@ -566,7 +566,7 @@ void Channel::voltageBalancing() {
     float uLoad = Channel::get(0).u.mon + Channel::get(1).u.mon;
     setVoltage(uLoad / 2);
 
-    iBeforeBalancing = temp;
+    uBeforeBalancing = temp;
 }
 
 void Channel::currentBalancing() {
