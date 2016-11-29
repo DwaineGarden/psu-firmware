@@ -630,7 +630,7 @@ void Channel::tick(unsigned long tick_usec) {
                     psu::generateError(SCPI_ERROR_CH1_OUTPUT_FAULT_DETECTED - (index - 1));
                     channel_coupling::outputEnable(*this, false);
                 }
-            } else {
+            } else if (tick_usec - dpNegMonitoringTime > 100 * 1000UL) {
                 if (flags.dpOn) {
                     if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
                         Channel& channel = Channel::get(index == 1 ? 1 : 0);
