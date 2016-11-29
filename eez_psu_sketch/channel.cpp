@@ -618,6 +618,7 @@ void Channel::tick(unsigned long tick_usec) {
                         Channel& channel = Channel::get(index == 1 ? 1 : 0);
 
                         if (util::isNaN(uBeforeBalancing)) {
+                            DebugTraceF("Voltage before balancing: %f", channel.u.set);
                             uBeforeBalancing = channel.u.set;
                         }
 
@@ -630,6 +631,7 @@ void Channel::tick(unsigned long tick_usec) {
                         Channel& channel = Channel::get(index == 1 ? 1 : 0);
 
                         if (util::isNaN(iBeforeBalancing)) {
+                            DebugTraceF("Current before balancing: %f", channel.i.set);
                             iBeforeBalancing = channel.i.set;
                         }
 

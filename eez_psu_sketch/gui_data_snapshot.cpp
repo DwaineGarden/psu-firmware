@@ -159,7 +159,13 @@ void Snapshot::takeSnapshot() {
         flags.isVoltageBalanced = 0;
     }
 
-	temperature::TempSensorTemperature &tempSensor = temperature::sensors[temp_sensor::MAIN];
+    if (channel_coupling::getType() == channel_coupling::TYPE_PARALLEL) {
+        flags.isCurrentBalanced = Channel::get(0).isCurrentBalanced() || Channel::get(1).isCurrentBalanced() ? 1 : 0;
+    } else {
+        flags.isCurrentBalanced = 0;
+    }
+
+    temperature::TempSensorTemperature &tempSensor = temperature::sensors[temp_sensor::MAIN];
 	if (!tempSensor.prot_conf.state) flags.otp = 0;
     else if (!tempSensor.isTripped()) flags.otp = 1;
     else flags.otp = 2;
@@ -276,6 +282,10 @@ Value Snapshot::get(const Cursor &cursor, uint8_t id) {
 	
     if (id == DATA_ID_CHANNEL_IS_VOLTAGE_BALANCED) {
         return data::Value(flags.isVoltageBalanced);
+    }
+
+    if (id == DATA_ID_CHANNEL_IS_CURRENT_BALANCED) {
+        return data::Value(flags.isCurrentBalanced);
     }
 
     if (id == DATA_ID_OTP) {
