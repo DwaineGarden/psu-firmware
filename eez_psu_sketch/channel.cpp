@@ -564,7 +564,9 @@ void Channel::voltageBalancing() {
     float temp = !util::isNaN(uBeforeBalancing) ? uBeforeBalancing : u.set;
 
     float uLoad = Channel::get(0).u.mon + Channel::get(1).u.mon;
+    profile::enableSave(false);
     setVoltage(uLoad / 2);
+    profile::enableSave(true);
 
     uBeforeBalancing = temp;
 }
@@ -575,7 +577,9 @@ void Channel::currentBalancing() {
     float temp = !util::isNaN(iBeforeBalancing) ? iBeforeBalancing : i.set;
 
     float iLoad = Channel::get(0).i.mon + Channel::get(1).i.mon;
+    profile::enableSave(false);
     setCurrent(iLoad / 2);
+    profile::enableSave(true);
 
     iBeforeBalancing = temp;
 }
@@ -795,7 +799,7 @@ void Channel::setCcMode(bool cc_mode) {
         setOperBits(OPER_ISUM_CC, cc_mode);
         setQuesBits(QUES_ISUM_VOLT, cc_mode);
 
-        restoreCurrentToValueBeforeBalancing();
+        Channel::get(index == 1 ? 1 : 0).restoreCurrentToValueBeforeBalancing();
     }
 }
 
@@ -810,7 +814,7 @@ void Channel::setCvMode(bool cv_mode) {
         setOperBits(OPER_ISUM_CV, cv_mode);
         setQuesBits(QUES_ISUM_CURR, cv_mode);
 
-        restoreVoltageToValueBeforeBalancing();
+        Channel::get(index == 1 ? 1 : 0).restoreVoltageToValueBeforeBalancing();
     }
 }
 
