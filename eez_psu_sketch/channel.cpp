@@ -635,9 +635,11 @@ void Channel::tick(unsigned long tick_usec) {
                     if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
                         Channel& channel = Channel::get(index == 1 ? 1 : 0);
                         channel.voltageBalancing();
+                        dpNegMonitoringTime = tick_usec;
                     } else if (channel_coupling::getType() == channel_coupling::TYPE_PARALLEL) {
                         Channel& channel = Channel::get(index == 1 ? 1 : 0);
                         channel.currentBalancing();
+                        dpNegMonitoringTime = tick_usec;
                     }
                 }
             }
