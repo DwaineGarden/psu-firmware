@@ -95,6 +95,8 @@ static const int EVENT_TYPE_ERROR = 3;
 	EVENT_INFO(DEFAULE_PROFILE_CHANGED_TO_9, 89, "Default profile changed to 9") \
 	EVENT_INFO(CH1_CALIBRATION_ENABLED, 90, "Ch1 calibration enabled") \
 	EVENT_INFO(CH2_CALIBRATION_ENABLED, 91, "Ch2 calibration enabled") \
+    EVENT_INFO(COUPLED_IN_PARALLEL, 92, "Coupled in parallel") \
+    EVENT_INFO(COUPLED_IN_SERIES, 93, "Coupled in series") \
 
 #define EVENT_ERROR_START_ID 10000
 #define EVENT_WARNING_START_ID 12000

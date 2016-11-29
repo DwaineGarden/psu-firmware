@@ -616,10 +616,7 @@ void Channel::tick(unsigned long tick_usec) {
                 }
             }
         }
-    } else {
-        dpNegMonitoringTime = tick_usec;
     }
-
 
 	// If channel output is off then test PWRGOOD here, otherwise it is tested in Channel::event method.
 #if !CONF_SKIP_PWRGOOD_TEST
@@ -879,6 +876,8 @@ void Channel::doOutputEnable(bool enable) {
 		doDpEnable(true);
 
         restoreVoltageToValueBeforeBalancing();
+        
+        dpNegMonitoringTime = micros();
 	} else {
 		if (getFeatures() & CH_FEATURE_LRIPPLE) {
 			doLowRippleEnable(false);

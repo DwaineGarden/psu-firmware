@@ -20,6 +20,7 @@
 #include "channel_coupling.h"
 #include "bp.h"
 #include "temperature.h"
+#include "event_queue.h"
 
 namespace eez {
 namespace psu {
@@ -90,6 +91,12 @@ bool setType(Type value) {
         }
 
         bp::switchChannelCoupling(g_channelCoupling);
+
+        if (g_channelCoupling == TYPE_PARALLEL) {
+            event_queue::pushEvent(event_queue::EVENT_INFO_COUPLED_IN_PARALLEL);
+        } else if (g_channelCoupling == TYPE_SERIES) {
+            event_queue::pushEvent(event_queue::EVENT_INFO_COUPLED_IN_SERIES);
+        }
 
         delay(100);
     }
