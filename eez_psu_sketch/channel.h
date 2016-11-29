@@ -505,6 +505,7 @@ public:
 	void setPowerLimit(float limit);
 
     bool isVoltageBalanced() { return !util::isNaN(uBeforeBalancing); }
+    bool isCurrentBalanced() { return !util::isNaN(iBeforeBalancing); }
 
 private:
     bool delayed_dp_off;
@@ -523,6 +524,7 @@ private:
     float I_MAX;
 
     float uBeforeBalancing;
+    float iBeforeBalancing;
 
 	MaxCurrentLimitCause maxCurrentLimitCause;
 
@@ -541,6 +543,7 @@ private:
 	void adcDataIsReady(int16_t data);
     
     void restoreVoltageToValueBeforeBalancing();
+    void restoreCurrentToValueBeforeBalancing();
 
 	void setCcMode(bool cc_mode);
     void setCvMode(bool cv_mode);
