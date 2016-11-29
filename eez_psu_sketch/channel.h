@@ -542,6 +542,9 @@ private:
 
 	void adcDataIsReady(int16_t data);
     
+    void voltageBalancing();
+    void currentBalancing();
+
     void restoreVoltageToValueBeforeBalancing();
     void restoreCurrentToValueBeforeBalancing();
 

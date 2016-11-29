@@ -558,6 +558,28 @@ bool Channel::isOk() {
     return psu::isPowerUp() && isPowerOk() && isTestOk();
 }
 
+void Channel::voltageBalancing() {
+    DebugTraceF("Channel voltage balancing: CH1_Umon=%f, CH2_Umon=%f", Channel::get(0).u.mon, Channel::get(1).u.mon);
+
+    float temp = !util::isNaN(uBeforeBalancing) ? uBeforeBalancing : u.set;
+
+    float uLoad = Channel::get(0).u.mon + Channel::get(1).u.mon;
+    setVoltage(uLoad / 2);
+
+    iBeforeBalancing = temp;
+}
+
+void Channel::currentBalancing() {
+    DebugTraceF("CH%d channel current balancing: CH1_Imon=%f, CH2_Imon=%f", index, Channel::get(0).i.mon, Channel::get(1).i.mon);
+
+    float temp = !util::isNaN(iBeforeBalancing) ? iBeforeBalancing : i.set;
+
+    float iLoad = Channel::get(0).i.mon + Channel::get(1).i.mon;
+    setCurrent(iLoad / 2);
+
+    iBeforeBalancing = temp;
+}
+
 void Channel::restoreVoltageToValueBeforeBalancing() {
     if (!util::isNaN(uBeforeBalancing)) {
         DebugTraceF("Restore voltage to value before balancing: %f", uBeforeBalancing);
@@ -568,7 +590,7 @@ void Channel::restoreVoltageToValueBeforeBalancing() {
 
 void Channel::restoreCurrentToValueBeforeBalancing() {
     if (!util::isNaN(iBeforeBalancing)) {
-        DebugTraceF("Restore current to value before balancing: %f", iBeforeBalancing);
+        DebugTraceF("Restore current to value before balancing: %f", index, iBeforeBalancing);
         setCurrent(iBeforeBalancing);
         iBeforeBalancing = NAN;
     }
@@ -610,33 +632,12 @@ void Channel::tick(unsigned long tick_usec) {
                 }
             } else {
                 if (flags.dpOn) {
-                    // channel balancing
                     if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
-                        // balance voltage
-                        DebugTraceF("Channel voltage balancing: CH1_Umon=%f, CH2_Umon=%f", Channel::get(0).u.mon, Channel::get(1).u.mon);
-
                         Channel& channel = Channel::get(index == 1 ? 1 : 0);
-
-                        if (util::isNaN(uBeforeBalancing)) {
-                            DebugTraceF("Voltage before balancing: %f", channel.u.set);
-                            uBeforeBalancing = channel.u.set;
-                        }
-
-                        float uLoad = Channel::get(0).u.mon + Channel::get(1).u.mon;
-                        channel.setVoltage(uLoad / 2);
+                        channel.voltageBalancing();
                     } else if (channel_coupling::getType() == channel_coupling::TYPE_PARALLEL) {
-                        // balance current
-                        DebugTraceF("Channel current balancing: CH1_Imon=%f, CH2_Imon=%f", Channel::get(0).i.mon, Channel::get(1).i.mon);
-
                         Channel& channel = Channel::get(index == 1 ? 1 : 0);
-
-                        if (util::isNaN(iBeforeBalancing)) {
-                            DebugTraceF("Current before balancing: %f", channel.i.set);
-                            iBeforeBalancing = channel.i.set;
-                        }
-
-                        float iLoad = Channel::get(0).i.mon + Channel::get(1).i.mon;
-                        channel.setCurrent(iLoad / 2);
+                        channel.currentBalancing();
                     }
                 }
             }

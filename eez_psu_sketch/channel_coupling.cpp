@@ -98,7 +98,7 @@ bool setType(Type value) {
             event_queue::pushEvent(event_queue::EVENT_INFO_COUPLED_IN_SERIES);
         }
 
-        delay(100);
+        delay(100); // Huge pause that allows relay contacts to debounce
     }
 
     return true;

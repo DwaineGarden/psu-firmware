@@ -30,3 +30,7 @@ Use this header file to override anything from conf.h or conf_advanced.h.
     CHANNEL(1, CH_BOARD_REVISION_R5B9_PARAMS, CH_PINS_1, CH_PARAMS_50V_3A), \
     CHANNEL(2, CH_BOARD_REVISION_R5B9_PARAMS, CH_PINS_2, CH_PARAMS_50V_3A) \
 */
+
+// Data rate in bits per second (baud) for serial data transmission.
+#undef SERIAL_SPEED
+#define SERIAL_SPEED 9600
