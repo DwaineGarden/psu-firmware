@@ -281,6 +281,7 @@ Channel::Channel(
 #endif
 
     uBeforeBalancing = NAN;
+    iBeforeBalancing = NAN;
 }
 
 void Channel::protectionEnter(ProtectionValue &cpv) {
@@ -559,9 +560,17 @@ bool Channel::isOk() {
 
 void Channel::restoreVoltageToValueBeforeBalancing() {
     if (!util::isNaN(uBeforeBalancing)) {
-        DebugTraceF("Restore U to value before balancing: %f", uBeforeBalancing);
+        DebugTraceF("Restore voltage to value before balancing: %f", uBeforeBalancing);
         setVoltage(uBeforeBalancing);
         uBeforeBalancing = NAN;
+    }
+}
+
+void Channel::restoreCurrentToValueBeforeBalancing() {
+    if (!util::isNaN(iBeforeBalancing)) {
+        DebugTraceF("Restore current to value before balancing: %f", iBeforeBalancing);
+        setCurrent(iBeforeBalancing);
+        iBeforeBalancing = NAN;
     }
 }
 
@@ -601,9 +610,11 @@ void Channel::tick(unsigned long tick_usec) {
                 }
             } else {
                 if (flags.dpOn) {
+                    // channel balancing
                     if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
-                        DebugTraceF("Channel balancing: CH1_Umon=%f, CH2_Umon=%f", Channel::get(0).u.mon, Channel::get(1).u.mon);
-                        // channel balancing
+                        // balance voltage
+                        DebugTraceF("Channel voltage balancing: CH1_Umon=%f, CH2_Umon=%f", Channel::get(0).u.mon, Channel::get(1).u.mon);
+
                         Channel& channel = Channel::get(index == 1 ? 1 : 0);
 
                         if (util::isNaN(uBeforeBalancing)) {
@@ -612,6 +623,18 @@ void Channel::tick(unsigned long tick_usec) {
 
                         float uLoad = Channel::get(0).u.mon + Channel::get(1).u.mon;
                         channel.setVoltage(uLoad / 2);
+                    } else if (channel_coupling::getType() == channel_coupling::TYPE_PARALLEL) {
+                        // balance current
+                        DebugTraceF("Channel current balancing: CH1_Imon=%f, CH2_Imon=%f", Channel::get(0).i.mon, Channel::get(1).i.mon);
+
+                        Channel& channel = Channel::get(index == 1 ? 1 : 0);
+
+                        if (util::isNaN(iBeforeBalancing)) {
+                            iBeforeBalancing = channel.i.set;
+                        }
+
+                        float iLoad = Channel::get(0).i.mon + Channel::get(1).i.mon;
+                        channel.setCurrent(iLoad / 2);
                     }
                 }
             }
@@ -766,6 +789,8 @@ void Channel::setCcMode(bool cc_mode) {
 
         setOperBits(OPER_ISUM_CC, cc_mode);
         setQuesBits(QUES_ISUM_VOLT, cc_mode);
+
+        restoreCurrentToValueBeforeBalancing();
     }
 }
 
@@ -909,6 +934,7 @@ void Channel::doOutputEnable(bool enable) {
 	//ioexp.enableWriteAndFlush();
 
     restoreVoltageToValueBeforeBalancing();
+    restoreCurrentToValueBeforeBalancing();
 
 	if (enable) {
 		// start ADC conversion
@@ -1210,6 +1236,7 @@ void Channel::setVoltage(float value) {
     dac.set_voltage(value);
 
     uBeforeBalancing = NAN;
+    restoreCurrentToValueBeforeBalancing();
 
     profile::save();
 }
@@ -1223,6 +1250,7 @@ void Channel::setCurrent(float value) {
     }
     dac.set_current(value);
 
+    iBeforeBalancing = NAN;
     restoreVoltageToValueBeforeBalancing();
 
     profile::save();
