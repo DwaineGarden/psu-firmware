@@ -97,6 +97,8 @@ static const int EVENT_TYPE_ERROR = 3;
 	EVENT_INFO(CH2_CALIBRATION_ENABLED, 91, "Ch2 calibration enabled") \
     EVENT_INFO(COUPLED_IN_PARALLEL, 92, "Coupled in parallel") \
     EVENT_INFO(COUPLED_IN_SERIES, 93, "Coupled in series") \
+    EVENT_INFO(CHANNELS_UNCOUPLED, 94, "Channels uncoupled") \
+    
 
 #define EVENT_ERROR_START_ID 10000
 #define EVENT_WARNING_START_ID 12000

@@ -96,6 +96,8 @@ bool setType(Type value) {
             event_queue::pushEvent(event_queue::EVENT_INFO_COUPLED_IN_PARALLEL);
         } else if (g_channelCoupling == TYPE_SERIES) {
             event_queue::pushEvent(event_queue::EVENT_INFO_COUPLED_IN_SERIES);
+        } else {
+            event_queue::pushEvent(event_queue::EVENT_INFO_CHANNELS_UNCOUPLED);
         }
 
         delay(100); // Huge pause that allows relay contacts to debounce
