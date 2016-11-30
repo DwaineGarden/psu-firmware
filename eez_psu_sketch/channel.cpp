@@ -561,27 +561,21 @@ bool Channel::isOk() {
 void Channel::voltageBalancing() {
     DebugTraceF("Channel voltage balancing: CH1_Umon=%f, CH2_Umon=%f", Channel::get(0).u.mon, Channel::get(1).u.mon);
 
-    float temp = !util::isNaN(uBeforeBalancing) ? uBeforeBalancing : u.set;
+    if (util::isNaN(uBeforeBalancing)) {
+        uBeforeBalancing = u.set;
+    }
 
-    float uLoad = Channel::get(0).u.mon + Channel::get(1).u.mon;
-    profile::enableSave(false);
-    setVoltage(uLoad / 2);
-    profile::enableSave(true);
-
-    uBeforeBalancing = temp;
+    doSetVoltage((Channel::get(0).u.mon + Channel::get(1).u.mon) / 2);
 }
 
 void Channel::currentBalancing() {
     DebugTraceF("CH%d channel current balancing: CH1_Imon=%f, CH2_Imon=%f", index, Channel::get(0).i.mon, Channel::get(1).i.mon);
 
-    float temp = !util::isNaN(iBeforeBalancing) ? iBeforeBalancing : i.set;
+    if (util::isNaN(iBeforeBalancing)) {
+        iBeforeBalancing = i.set;
+    }
 
-    float iLoad = Channel::get(0).i.mon + Channel::get(1).i.mon;
-    profile::enableSave(false);
-    setCurrent(iLoad / 2);
-    profile::enableSave(true);
-
-    iBeforeBalancing = temp;
+    doSetCurrent((Channel::get(0).i.mon + Channel::get(1).i.mon) / 2);
 }
 
 void Channel::restoreVoltageToValueBeforeBalancing() {
@@ -634,7 +628,7 @@ void Channel::tick(unsigned long tick_usec) {
                     psu::generateError(SCPI_ERROR_CH1_OUTPUT_FAULT_DETECTED - (index - 1));
                     channel_coupling::outputEnable(*this, false);
                 }
-            } else if (tick_usec - dpNegMonitoringTime > 100 * 1000UL) {
+            } else if (tick_usec - dpNegMonitoringTime > 500 * 1000UL) {
                 if (flags.dpOn) {
                     if (channel_coupling::getType() == channel_coupling::TYPE_SERIES) {
                         Channel& channel = Channel::get(index == 1 ? 1 : 0);
@@ -1227,7 +1221,7 @@ bool Channel::isLowRippleAutoEnabled() {
     return flags.lrippleAutoEnabled;
 }
 
-void Channel::setVoltage(float value) {
+void Channel::doSetVoltage(float value) {
     u.set = value;
     u.mon_dac = 0;
 
@@ -1243,6 +1237,10 @@ void Channel::setVoltage(float value) {
         value = util::remap(value, cal_conf.u.min.val, cal_conf.u.min.dac, cal_conf.u.max.val, cal_conf.u.max.dac);
     }
     dac.set_voltage(value);
+}
+
+void Channel::setVoltage(float value) {
+    doSetVoltage(value);
 
     uBeforeBalancing = NAN;
     restoreCurrentToValueBeforeBalancing();
@@ -1250,7 +1248,7 @@ void Channel::setVoltage(float value) {
     profile::save();
 }
 
-void Channel::setCurrent(float value) {
+void Channel::doSetCurrent(float value) {
     i.set = value;
     i.mon_dac = 0;
 
@@ -1258,6 +1256,10 @@ void Channel::setCurrent(float value) {
         value = util::remap(value, cal_conf.i.min.val, cal_conf.i.min.dac, cal_conf.i.max.val, cal_conf.i.max.dac);
     }
     dac.set_current(value);
+}
+
+void Channel::setCurrent(float value) {
+    doSetCurrent(value);
 
     iBeforeBalancing = NAN;
     restoreVoltageToValueBeforeBalancing();

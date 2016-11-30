@@ -506,6 +506,8 @@ public:
 
     bool isVoltageBalanced() { return !util::isNaN(uBeforeBalancing); }
     bool isCurrentBalanced() { return !util::isNaN(iBeforeBalancing); }
+    float getUSet() { return isVoltageBalanced() ? uBeforeBalancing : u.set; }
+    float getISet() { return isCurrentBalanced() ? iBeforeBalancing : i.set; }
 
 private:
     bool delayed_dp_off;
@@ -547,6 +549,9 @@ private:
 
     void restoreVoltageToValueBeforeBalancing();
     void restoreCurrentToValueBeforeBalancing();
+
+    void doSetVoltage(float value);
+    void doSetCurrent(float value);
 
 	void setCcMode(bool cc_mode);
     void setCvMode(bool cv_mode);
