@@ -52,8 +52,8 @@ TempSensor::TempSensor(const char *name_, int installed_, int pin_, float p1_vol
 {
 }
 
-bool TempSensor::init() {
-	return test();
+void TempSensor::init() {
+    test_result = psu::TEST_OK;
 }
 
 bool TempSensor::test() {

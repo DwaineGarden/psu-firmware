@@ -129,11 +129,11 @@ void finish_rpm_measure() {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool init() {
+void init() {
 	g_rpmMeasureInterruptNumber = digitalPinToInterrupt(FAN_SENSE);
     SPI.usingInterrupt(g_rpmMeasureInterruptNumber);
 
-	return test();
+    test_result = psu::TEST_OK;
 }
 
 void test_start() {

@@ -81,8 +81,6 @@ static void updateMasterSync();
 ////////////////////////////////////////////////////////////////////////////////
 
 void boot() {
-    bool success = true;
-
     // initialize shield
     eez_psu_init();
 
@@ -93,7 +91,7 @@ void boot() {
     bp::init();
     serial::init();
 
-    success &= eeprom::init();
+    eeprom::init();
 
 	g_powerOnTimeCounter.init();
 
@@ -103,8 +101,8 @@ void boot() {
     gui::init();
 #endif
 
-    success &= rtc::init();
-	success &= datetime::init();
+    rtc::init();
+	datetime::init();
 
 	event_queue::init();
 
@@ -112,16 +110,17 @@ void boot() {
 #if OPTION_DISPLAY
     gui::showEthernetInit();
 #endif
-	success &= ethernet::init();
+	ethernet::init();
 #else
 	DebugTrace("Ethernet initialization skipped!");
 #endif
 
 #if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4
-	fan::test_start();
+    fan::init();
+//	fan::test_start();
 #endif
 
-	success &= temperature::init();
+	temperature::init();
 
     // load channels calibration parameters
     for (int i = 0; i < CH_NUM; ++i) {
@@ -164,24 +163,22 @@ void boot() {
             
             if (differenceChecked && profile::recallFromProfile(&profile)) {
                 autoRecalledFromProfile = true;
-                success &= autoRecalledFromProfile;
+                autoRecalledFromProfile;
             }
         }
     }
     
     if (!autoRecalledFromProfile) {
         // ... reset
-        success &= psu_reset(true);
+        psu_reset(true);
     }
 
-#if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4
-	success &= fan::init();
-#endif
+//#if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4
+//	fan::init();
+//#endif
 
     // play beep if there is an error during boot procedure
-    if (!success) {
-        sound::playBeep();
-    }
+    sound::playBeep();
 
     /*
     using namespace persist_conf;
@@ -276,11 +273,11 @@ bool powerUp() {
     gui::showWelcomePage();
 #endif
 
-#if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4
-	if (g_is_booted) {
-		fan::test_start();
-	}
-#endif
+//#if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4
+//	if (g_is_booted) {
+//		fan::test_start();
+//	}
+//#endif
 
     // reset channels
     for (int i = 0; i < CH_NUM; ++i) {
@@ -295,22 +292,22 @@ bool powerUp() {
     // turn off standby blue LED
     bp::switchStandby(false);
 
-    bool success = true;
+    //bool success = true;
 
-	if (g_is_booted) {
-		success &= test_shield();
-	}
+	//if (g_is_booted) {
+	//	success &= test_shield();
+	//}
 
     // init channels
     for (int i = 0; i < CH_NUM; ++i) {
-        success &= Channel::get(i).init();
+        Channel::get(i).init();
     }
 
-#if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4
-	if (g_is_booted) {
-		success &= fan::test();
-	}
-#endif
+//#if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4
+//	if (g_is_booted) {
+//		success &= fan::test();
+//	}
+//#endif
 
     // turn on Power On (PON) bit of ESE register
     setEsrBits(ESR_PON);
@@ -318,9 +315,9 @@ bool powerUp() {
 	event_queue::pushEvent(event_queue::EVENT_INFO_POWER_UP);
 
     // play power up tune on success
-    if (success) {
+    //if (success) {
         sound::playPowerUp();
-    }
+    //}
 
     return true;
 }

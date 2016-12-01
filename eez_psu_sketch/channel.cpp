@@ -379,28 +379,15 @@ void Channel::protectionCheck(ProtectionValue &cpv) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool Channel::init() {
-    bool result = true;
-
+void Channel::init() {
     bool last_save_enabled = profile::enableSave(false);
 
-	for (int i = 0; i < 3; ++i) {
-		if (i > 0) {
-			DebugTraceF("ioexp.init failed (%d)", i);
-		}
-	    result = ioexp.init();
-		if (result) {
-			break;
-		}
-	}
-
-    result &= adc.init();
-    result &= dac.init();
+	ioexp.init();
+    adc.init();
+    dac.init();
 	onTimeCounter.init();
 
     profile::enableSave(last_save_enabled);
-
-    return result;
 }
 
 void Channel::onPowerDown() {
@@ -644,12 +631,20 @@ void Channel::tick(unsigned long tick_usec) {
         }
     }
 
-	// If channel output is off then test PWRGOOD here, otherwise it is tested in Channel::event method.
+	// If channel output is off then test PWRGOOD here, otherwise it is tested in Channel::eventGpio method.
 #if !CONF_SKIP_PWRGOOD_TEST
 	if (!isOutputEnabled() && psu::isPowerUp()) {
 		testPwrgood(ioexp.readGpio());
 	}
 #endif
+
+    //if (!util::equal(u.set, u.mon_dac, CHANNEL_VALUE_PRECISION)) {
+    //    DebugTraceF("U_SET(%f) <> U_MON_DAC(%f)", u.set, u.mon_dac);
+    //}
+
+    //if (!util::equal(i.set, i.mon_dac, CHANNEL_VALUE_PRECISION)) {
+    //    DebugTraceF("I_SET(%f) <> I_MON_DAC(%f)", i.set, i.mon_dac);
+    //}
 }
 
 float Channel::remapAdcDataToVoltage(int16_t adc_data) {
@@ -823,7 +818,14 @@ void Channel::protectionCheck() {
 	protectionCheck(opp);
 }
 
-void Channel::event(uint8_t gpio, int16_t adc_data) {
+void Channel::eventAdcData(int16_t adc_data) {
+    if (!psu::isPowerUp()) return;
+
+    adcDataIsReady(adc_data);
+    protectionCheck();
+}
+
+void Channel::eventGpio(uint8_t gpio) {
     if (!psu::isPowerUp()) return;
 
 #if !CONF_SKIP_PWRGOOD_TEST
@@ -845,13 +847,9 @@ void Channel::event(uint8_t gpio, int16_t adc_data) {
 		}
 	}
 
-    adcDataIsReady(adc_data);
-
     setCvMode(gpio & (1 << IOExpander::IO_BIT_IN_CV_ACTIVE) ? true : false);
     setCcMode(gpio & (1 << IOExpander::IO_BIT_IN_CC_ACTIVE) ? true : false);
     updateCcAndCvSwitch();
-
-    protectionCheck();
 }
 
 void Channel::adcReadMonDac() {
@@ -943,7 +941,7 @@ void Channel::doOutputEnable(bool enable) {
 		// start ADC conversion
 		adc.start(AnalogDigitalConverter::ADC_REG0_READ_U_MON);
 
-		onTimeCounter.start();
+        onTimeCounter.start();
 	} else {
 		onTimeCounter.stop();
 	}

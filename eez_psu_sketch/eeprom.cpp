@@ -127,7 +127,7 @@ bool write(const uint8_t *buffer, uint16_t buffer_size, uint16_t address) {
 	return false;
 }
 
-bool init() {
+void init() {
     if (OPTION_EXT_EEPROM) {
         // write 0 (no protection) to status register
         SPI.beginTransaction(AT25256B_SPI);
@@ -138,7 +138,7 @@ bool init() {
         SPI.endTransaction();
     }
 
-    return test();
+    test_result = psu::TEST_OK;
 }
 
 bool test() {
