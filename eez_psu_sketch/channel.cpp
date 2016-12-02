@@ -549,21 +549,17 @@ bool Channel::isOk() {
 
 void Channel::voltageBalancing() {
     DebugTraceF("Channel voltage balancing: CH1_Umon=%f, CH2_Umon=%f", Channel::get(0).u.mon, Channel::get(1).u.mon);
-
     if (util::isNaN(uBeforeBalancing)) {
         uBeforeBalancing = u.set;
     }
-
     doSetVoltage((Channel::get(0).u.mon + Channel::get(1).u.mon) / 2);
 }
 
 void Channel::currentBalancing() {
     DebugTraceF("CH%d channel current balancing: CH1_Imon=%f, CH2_Imon=%f", index, Channel::get(0).i.mon, Channel::get(1).i.mon);
-
     if (util::isNaN(iBeforeBalancing)) {
         iBeforeBalancing = i.set;
     }
-
     doSetCurrent((Channel::get(0).i.mon + Channel::get(1).i.mon) / 2);
 }
 
@@ -603,7 +599,7 @@ void Channel::tick(unsigned long tick_usec) {
     /// and that condition lasts more then DP_NEG_DELAY seconds (default 5 s),
     /// down-programmer circuit has to be switched off.
     if (isOutputEnabled()) {
-        if (u.mon * i.mon >= DP_NEG_LEV) {
+        if (u.mon * i.mon >= DP_NEG_LEV || tick_usec < dpNegMonitoringTime) {
             dpNegMonitoringTime = tick_usec;
         } else {
             if (tick_usec - dpNegMonitoringTime > DP_NEG_DELAY * 1000000UL) {
@@ -876,7 +872,7 @@ void Channel::doDpEnable(bool enable) {
     setOperBits(OPER_ISUM_DP_OFF, !enable);
     flags.dpOn = enable;
     if (enable) {
-        dpNegMonitoringTime = millis();
+        dpNegMonitoringTime = micros();
     }
 }
 

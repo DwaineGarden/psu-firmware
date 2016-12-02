@@ -320,6 +320,7 @@ bool autoRecall() {
 void boot() {
     init();
 
+    // test
     g_bootTestSuccess = true;
 
     g_bootTestSuccess &= testShield();
@@ -336,29 +337,10 @@ void boot() {
     g_isBooted = true;
 
     if (g_powerIsUp) {
+        // enable channels output if required
         for (int i = 0; i < CH_NUM; ++i) {
             Channel::get(i).afterBootOutputEnable();
         }
-    }
-
-#if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4
-	watchdog::init();
-#endif
-}
-
-////////////////////////////////////////////////////////////////////////////////
-
-void reinitAfterGlitch() {
-    eeprom::init();
-    rtc::init();
-	datetime::init();
-
-    for (int i = 0; i < CH_NUM; ++i) {
-        Channel::get(i).init();
-    }
-
-    for (int i = 0; i < CH_NUM; ++i) {
-        Channel::get(i).update();
     }
 }
 

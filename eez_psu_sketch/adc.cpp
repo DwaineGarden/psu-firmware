@@ -109,7 +109,7 @@ bool AnalogDigitalConverter::test() {
 }
 
 void AnalogDigitalConverter::tick(unsigned long tick_usec) {
-    if (channel.isOutputEnabled()) {
+    if (channel.isOk() && channel.isOutputEnabled()) {
         noInterrupts();
         unsigned long last_adc_start_time = start_time;
         interrupts();

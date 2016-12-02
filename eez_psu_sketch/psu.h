@@ -60,7 +60,6 @@ enum TestResult {
 };
 
 void boot();
-void reinitAfterGlitch();
 
 extern bool g_isBooted;
 
