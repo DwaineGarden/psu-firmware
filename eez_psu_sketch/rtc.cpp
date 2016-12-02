@@ -50,7 +50,6 @@ void writeRegisters(int command, int n, const uint8_t *values) {
 }
 
 void init() {
-    test_result = psu::TEST_OK;
 }
 
 bool test() {

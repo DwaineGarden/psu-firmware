@@ -80,7 +80,6 @@ void DigitalAnalogConverter::set_value(uint8_t buffer, float value) {
 ////////////////////////////////////////////////////////////////////////////////
 
 void DigitalAnalogConverter::init() {
-    test_result = psu::TEST_OK;
 }
 
 bool DigitalAnalogConverter::test() {

@@ -75,7 +75,7 @@ uint8_t IOExpander::getRegInitValue(int i) {
 	if (REG_VALUES[i] == IOExpander::REG_IODIR) {
         return channel.ioexp_iodir;
     } else if (REG_VALUES[i] == IOExpander::REG_GPIO) {
-        return channel.ioexp_gpio_init;
+        return gpio;
     } else {
         return REG_VALUES[i + 1];
     }
@@ -86,16 +86,15 @@ void IOExpander::init() {
 		reg_write(REG_VALUES[i], getRegInitValue(i));
     }
 
-    int intNum = digitalPinToInterrupt(channel.convend_pin);
-    SPI.usingInterrupt(intNum);
-    attachInterrupt(
-        intNum,
-        channel.index == 1 ? ioexp_interrupt_ch1 : ioexp_interrupt_ch2,
-        FALLING
-        );
-
-    test_result = psu::TEST_OK;
-    channel.flags.powerOk = testBit(IO_BIT_IN_PWRGOOD);
+    if (!g_isBooted) {
+        int intNum = digitalPinToInterrupt(channel.convend_pin);
+        SPI.usingInterrupt(intNum);
+        attachInterrupt(
+            intNum,
+            channel.index == 1 ? ioexp_interrupt_ch1 : ioexp_interrupt_ch2,
+            FALLING
+            );
+    }
 }
 
 bool IOExpander::test() {
@@ -149,44 +148,30 @@ void IOExpander::tick(unsigned long tick_usec) {
     uint8_t gpio = readGpio();
 
     if (gpio_changed) {
-        bool f = false;
+        bool glitchDetected = false;
 
         if ((gpio & (1 << IO_BIT_OUT_DP_ENABLE)) != (this->gpio & (1 << IO_BIT_OUT_DP_ENABLE))) {
             DebugTrace("IOEXP write check failed for DP_ENABLE");
-            f = true;
+            glitchDetected = true;
         }
 
         if ((gpio & (1 << IO_BIT_OUT_SET_100_PERCENT)) != (this->gpio & (1 << IO_BIT_OUT_SET_100_PERCENT))) {
             DebugTrace("IOEXP write check failed for SET_100_PERCENT");
-            f = true;
+            glitchDetected = true;
         }
 
         if ((gpio & (1 << IO_BIT_OUT_EXT_PROG)) != (this->gpio & (1 << IO_BIT_OUT_EXT_PROG))) {
             DebugTrace("IOEXP write check failed for OUT_EXT_PROG");
-            f = true;
+            glitchDetected = true;
         }
 
         if ((gpio & (1 << IO_BIT_OUT_OUTPUT_ENABLE)) != (this->gpio & (1 << IO_BIT_OUT_OUTPUT_ENABLE))) {
             DebugTrace("IOEXP write check failed for OUTPUT_ENABLE");
-            f = true;
+            glitchDetected = true;
         }
 
-        if (f) {
-            DebugTrace("Reseting IOEXP registers...");
-
-            for (int i = 0; REG_VALUES[i] != 0xFF; i += 3) {
-                if (REG_VALUES[i] != REG_GPIO) {
-		            reg_write(REG_VALUES[i], getRegInitValue(i));
-                } else {
-                    reg_write(REG_GPIO, this->gpio);
-                }
-            }
-
-            DebugTrace("Updating channels...");
-
-            for (int i = 0; i < CH_NUM; ++i) {
-                Channel::get(i).update();
-            }
+        if (glitchDetected) {
+            psu::reinitAfterGlitch();
         } else {
             gpio_changed = false;
         }

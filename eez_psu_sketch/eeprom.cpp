@@ -137,8 +137,6 @@ void init() {
         digitalWrite(EEPROM_SELECT, HIGH);
         SPI.endTransaction();
     }
-
-    test_result = psu::TEST_OK;
 }
 
 bool test() {

@@ -385,7 +385,9 @@ void Channel::init() {
 	ioexp.init();
     adc.init();
     dac.init();
-	onTimeCounter.init();
+    if (!g_isBooted) {
+	    onTimeCounter.init();
+    }
 
     profile::enableSave(last_save_enabled);
 }
@@ -879,7 +881,7 @@ void Channel::doDpEnable(bool enable) {
 }
 
 void Channel::doOutputEnable(bool enable) {
-    if (!psu::g_is_booted) {
+    if (!psu::g_isBooted) {
         flags.afterBootOutputEnabled = enable;
         return;
     }

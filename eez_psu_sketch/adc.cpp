@@ -60,8 +60,6 @@ void AnalogDigitalConverter::init() {
     digitalWrite(channel.adc_pin, HIGH);
     digitalWrite(channel.isolator_pin, ISOLATOR_DISABLE);
     SPI.endTransaction();
-
-    test_result = psu::TEST_OK;
 }
 
 bool AnalogDigitalConverter::test() {
