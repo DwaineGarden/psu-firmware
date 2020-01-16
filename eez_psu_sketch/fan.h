@@ -30,6 +30,16 @@ void test_start();
 bool test();
 void tick(uint32_t tick_usec);
 
+extern bool g_fanManualControl;
+extern int g_fanSpeedPWM;
+
+extern double g_Kp;
+extern double g_Ki;
+extern double g_Kd;
+extern int g_POn;
+
+void setPidTunings(double Kp, double Ki, double Kd, int POn);
+
 }
 }
 } // namespace eez::psu::fan

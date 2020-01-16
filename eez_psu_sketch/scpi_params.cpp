@@ -118,13 +118,13 @@ bool param_temp_sensor(scpi_t *context, int32_t &sensor) {
         }
         sensor = temp_sensor::AUX;
 #else
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
 		return false;
 #endif
     }
 
 	if (!temp_sensor::sensors[sensor].installed) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
 		return false;
 	}
 
@@ -427,22 +427,21 @@ bool get_power_limit_param(scpi_t *context, float &value, const Channel *channel
 }
 
 bool get_voltage_limit_from_param(scpi_t *context, const scpi_number_t &param, float &value, const Channel *channel, const Channel::Value *cv) {
+	if (context==NULL || channel==NULL) {
+		SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
+		return false;
+	}
     if (param.special) {
-		if (channel) {
-			if (param.tag == SCPI_NUM_MAX) {
-				value = channel_dispatcher::getUMaxLimit(*channel);
-			}
-			else if (param.tag == SCPI_NUM_MIN) {
-				value = channel_dispatcher::getUMin(*channel);
-			}
-			else if (param.tag == SCPI_NUM_DEF) {
-				value = channel_dispatcher::getUMaxLimit(*channel);
-			}
-			else {
-				SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
-				return false;
-			}
-		} else {
+		if (param.tag == SCPI_NUM_MAX) {
+			value = channel_dispatcher::getUMaxLimit(*channel);
+		}
+		else if (param.tag == SCPI_NUM_MIN) {
+			value = channel_dispatcher::getUMin(*channel);
+		}
+		else if (param.tag == SCPI_NUM_DEF) {
+			value = channel_dispatcher::getUMaxLimit(*channel);
+		}
+		else {
 			SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
 			return false;
 		}
@@ -455,11 +454,9 @@ bool get_voltage_limit_from_param(scpi_t *context, const scpi_number_t &param, f
 
         value = (float)param.value;
 		
-		if (channel) {
-			if (value < channel_dispatcher::getUMin(*channel) || channel_dispatcher::getUMaxLimit(*channel)) {
-				SCPI_ErrorPush(context, SCPI_ERROR_DATA_OUT_OF_RANGE);
-				return false;
-			}
+		if (value < channel_dispatcher::getUMin(*channel) || value > channel_dispatcher::getUMaxLimit(*channel)) {
+			SCPI_ErrorPush(context, SCPI_ERROR_DATA_OUT_OF_RANGE);
+			return false;
 		}
     }
 
@@ -467,16 +464,23 @@ bool get_voltage_limit_from_param(scpi_t *context, const scpi_number_t &param, f
 }
 
 bool get_current_limit_from_param(scpi_t *context, const scpi_number_t &param, float &value, const Channel *channel, const Channel::Value *cv) {
+	if (context==NULL || channel==NULL) {
+		SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
+		return false;
+	}
     if (param.special) {
         if (param.tag == SCPI_NUM_MAX) {
             value = channel_dispatcher::getIMaxLimit(*channel);
         }
         else if (param.tag == SCPI_NUM_MIN) {
-            value = channel_dispatcher::getIMax(*channel);
+            value = channel_dispatcher::getIMin(*channel);
         }
         else if (param.tag == SCPI_NUM_DEF) {
             value = channel_dispatcher::getIMaxLimit(*channel);
-        }
+		} else {
+			SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
+			return false;
+		}
     }
     else {
         if (param.unit != SCPI_UNIT_NONE && param.unit != SCPI_UNIT_AMPER) {
@@ -485,6 +489,7 @@ bool get_current_limit_from_param(scpi_t *context, const scpi_number_t &param, f
         }
 
         value = (float)param.value;
+        
         if (value < channel_dispatcher::getIMin(*channel) || value > channel_dispatcher::getIMaxLimit(*channel)) {
             SCPI_ErrorPush(context, SCPI_ERROR_DATA_OUT_OF_RANGE);
             return false;
@@ -495,6 +500,10 @@ bool get_current_limit_from_param(scpi_t *context, const scpi_number_t &param, f
 }
 
 bool get_power_limit_from_param(scpi_t *context, const scpi_number_t &param, float &value, const Channel *channel, const Channel::Value *cv) {
+	if (context==NULL || channel==NULL) {
+		SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
+		return false;
+	}
     if (param.special) {
         if (param.tag == SCPI_NUM_MAX) {
             value = channel_dispatcher::getPowerMaxLimit(*channel);
@@ -507,12 +516,13 @@ bool get_power_limit_from_param(scpi_t *context, const scpi_number_t &param, flo
         }
     }
     else {
-        if (param.unit != SCPI_UNIT_NONE) {
+        if (param.unit != SCPI_UNIT_NONE && param.unit != SCPI_UNIT_WATT) {
             SCPI_ErrorPush(context, SCPI_ERROR_INVALID_SUFFIX);
             return false;
         }
 
         value = (float)param.value;
+        
         if (value < channel_dispatcher::getPowerMinLimit(*channel) || value > channel_dispatcher::getPowerMaxLimit(*channel)) {
             SCPI_ErrorPush(context, SCPI_ERROR_DATA_OUT_OF_RANGE);
             return false;
@@ -556,6 +566,128 @@ void outputOnTime(scpi_t* context, uint32_t time) {
 	ontime::counterToString(str, sizeof(str), time);
 	SCPI_ResultText(context, str);
 }
+
+bool checkPassword(scpi_t *context, const char *againstPassword) {
+    const char *password;
+    size_t len;
+
+    if (!SCPI_ParamCharacters(context, &password, &len, true)) {
+        return false;
+    }
+
+	size_t nPassword = strlen(againstPassword);
+    if (nPassword != len || strncmp(password, againstPassword, len) != 0) {
+        SCPI_ErrorPush(context, SCPI_ERROR_INVALID_PASSWORD);
+        return false;
+    }
+
+    return true;
+}
+
+#if OPTION_SD_CARD
+
+void cleanupPath(char *filePath) {
+	util::replaceCharacter(filePath, '\\', '/');
+
+	char *q = filePath;
+
+	for (char *p = filePath; *p; ++p) {
+		if (*p == '\\') {
+			*p = '/';
+		}
+
+		if (*p == '/' && (p > filePath && *(p - 1) == '/')) {
+			// '//' -> '/'
+			continue;
+		}
+		else if (*p == '.') {
+			if (!*(p + 1)) {
+				// '<...>/.' -> '<...>'
+				break;
+			}
+			else if (*(p + 1) == '/') {
+				// '<...>/./<...>' -> '<...>/<...>'
+				++p;
+				continue;
+			}
+			else if (*(p + 1) == '.') {
+				// '<...>/something/..<...>' -> '<...>/<...>'
+				q -= 2;
+				while (true) {
+					if (q < filePath) {
+						q = filePath;
+						break;
+					}
+					if (*q == '/') {
+						break;
+					}
+					--q;
+				}
+				++p;
+				continue;
+			}
+		}
+
+		*q++ = *p;
+	}
+
+	// remove trailing '/'
+	if (q > filePath && *(q - 1) == '/') {
+		--q;
+	}
+
+	// if empty then make it '/'
+	if (q == filePath) {
+		*q++ = '/';
+	}
+
+	*q = 0;
+}
+
+bool getFilePath(scpi_t *context, char *filePath, bool mandatory) {
+	scpi_psu_t *psuContext = (scpi_psu_t *)context->user_context;
+
+	const char *filePathParam;
+	size_t filePathParamLen;
+	if (SCPI_ParamCharacters(context, &filePathParam, &filePathParamLen, mandatory)) {
+		if (filePathParamLen > MAX_PATH_LENGTH) {
+			SCPI_ErrorPush(context, SCPI_ERROR_FILE_NAME_ERROR);
+			return false;
+		}
+
+		// is it absolute file path?
+		if (filePathParam[0] == '/' || filePathParam[0] == '\\') {
+			// yes
+			strncpy(filePath, filePathParam, filePathParamLen);
+			filePath[filePathParamLen] = 0;
+		}
+		else {
+			// no, combine with current directory to get absolute path
+			size_t currentDirectoryLen = strlen(psuContext->currentDirectory);
+			size_t filePathLen = currentDirectoryLen + 1 + filePathParamLen;
+			if (filePathLen > MAX_PATH_LENGTH) {
+				SCPI_ErrorPush(context, SCPI_ERROR_FILE_NAME_ERROR);
+				return false;
+			}
+			strncpy(filePath, psuContext->currentDirectory, currentDirectoryLen);
+			filePath[currentDirectoryLen] = '/';
+			strncpy(filePath + currentDirectoryLen + 1, filePathParam, filePathParamLen);
+			filePath[filePathLen] = 0;
+		}
+	}
+	else {
+		if (SCPI_ParamErrorOccurred(context)) {
+			return false;
+		}
+		strcpy(filePath, psuContext->currentDirectory);
+	}
+
+	cleanupPath(filePath);
+
+	return true;
+}
+
+#endif // OPTION_SD_CARD
 
 }
 }

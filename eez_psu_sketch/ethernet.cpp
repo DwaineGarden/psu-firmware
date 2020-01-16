@@ -83,6 +83,10 @@ int SCPI_Error(scpi_t *context, int_fast16_t err) {
         char errorOutputBuffer[256];
         sprintf_P(errorOutputBuffer, PSTR("**ERROR: %d,\"%s\"\r\n"), (int16_t)err, SCPI_ErrorTranslate(err));
         ethernet_client_write(g_activeClient, errorOutputBuffer, strlen(errorOutputBuffer));
+
+		if (err == SCPI_ERROR_INPUT_BUFFER_OVERRUN) {
+			scpi::onBufferOverrun(*context);
+		}
     }
 
     return 0;
@@ -111,10 +115,10 @@ scpi_result_t SCPI_Reset(scpi_t *context) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-scpi_reg_val_t scpi_psu_regs[SCPI_PSU_REG_COUNT];
-scpi_psu_t scpi_psu_context = { scpi_psu_regs, 1 };
+static scpi_reg_val_t g_scpiPsuRegs[SCPI_PSU_REG_COUNT];
+static scpi_psu_t g_scpiPsuContext = { g_scpiPsuRegs };
 
-scpi_interface_t scpi_interface = {
+static scpi_interface_t g_scpiInterface = {
     SCPI_Error,
     SCPI_Write,
     SCPI_Control,
@@ -122,8 +126,8 @@ scpi_interface_t scpi_interface = {
     SCPI_Reset,
 };
 
-char scpi_input_buffer[SCPI_PARSER_INPUT_BUFFER_LENGTH];
-int16_t error_queue_data[SCPI_PARSER_ERROR_QUEUE_SIZE + 1];
+static char g_scpiInputBuffer[SCPI_PARSER_INPUT_BUFFER_LENGTH];
+static int16_t g_errorQueueData[SCPI_PARSER_ERROR_QUEUE_SIZE + 1];
 
 scpi_t g_scpiContext;
 
@@ -201,10 +205,10 @@ void init() {
 #endif
 
     scpi::init(g_scpiContext,
-        scpi_psu_context,
-        &scpi_interface,
-        scpi_input_buffer, SCPI_PARSER_INPUT_BUFFER_LENGTH,
-        error_queue_data, SCPI_PARSER_ERROR_QUEUE_SIZE + 1);
+        g_scpiPsuContext,
+        &g_scpiInterface,
+        g_scpiInputBuffer, SCPI_PARSER_INPUT_BUFFER_LENGTH,
+        g_errorQueueData, SCPI_PARSER_ERROR_QUEUE_SIZE + 1);
 
     //g_lastCheckDhcpLeaseTime = micros();
 }
@@ -219,6 +223,10 @@ bool test() {
 
 void tick(uint32_t tick_usec) {
     if (g_testResult != psu::TEST_OK) {
+        return;
+    }
+
+    if (scpi::g_busy) {
         return;
     }
 
@@ -251,6 +259,7 @@ void tick(uint32_t tick_usec) {
             client.flush();
             g_activeClient = client;
             g_isConnected = true;
+			scpi::emptyBuffer(g_scpiContext);
             DebugTrace("A new ethernet client detected!");
         }
 
@@ -282,6 +291,18 @@ uint32_t getIpAddress() {
 
 bool isConnected() {
     return g_isConnected;
+}
+
+void update() {
+    if (g_isConnected) {
+        if (g_activeClient.connected()) {
+            g_activeClient.stop();
+            g_activeClient = EthernetClient();
+        }
+        g_isConnected = false;
+    }
+
+    g_testResult = psu::TEST_WARNING;
 }
 
 }

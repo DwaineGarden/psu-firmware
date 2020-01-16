@@ -19,6 +19,8 @@
 #include "psu.h"
 #include "serial_psu.h"
 
+#define CONF_CHUNK_SIZE CONF_SERIAL_BUFFER_SIZE
+
 namespace eez {
 namespace psu {
 
@@ -27,16 +29,22 @@ using namespace scpi;
 namespace serial {
 
 psu::TestResult g_testResult = psu::TEST_FAILED;
-static bool g_isConnected = false;
 
 long g_bauds[] = {4800, 9600, 19200, 38400, 57600, 115200};
 size_t g_baudsSize = sizeof(g_bauds) / sizeof(long);
 
 size_t SCPI_Write(scpi_t *context, const char * data, size_t len) {
-    if (serial::g_testResult == TEST_OK) {
-        return SERIAL_PORT.write(data, len);
+	size_t written = 0;
+
+	if (serial::g_testResult == TEST_OK) {
+        for (size_t i = 0; i < len; i += CONF_SERIAL_BUFFER_SIZE) {
+			int size = MIN(CONF_SERIAL_BUFFER_SIZE, len - i);
+			SERIAL_PORT.write(data + i, size);
+			written += size;
+        }
     }
-    return 0;
+    
+	return written;
 }
 
 scpi_result_t SCPI_Flush(scpi_t *context) {
@@ -46,7 +54,11 @@ scpi_result_t SCPI_Flush(scpi_t *context) {
 int SCPI_Error(scpi_t *context, int_fast16_t err) {
     if (err != 0) {
         scpi::printError(err);
-    }
+
+		if (err == SCPI_ERROR_INPUT_BUFFER_OVERRUN) {
+			scpi::onBufferOverrun(*context);
+		}
+	}
 
     return 0;
 }
@@ -78,10 +90,10 @@ scpi_result_t SCPI_Reset(scpi_t *context) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-scpi_reg_val_t scpi_psu_regs[SCPI_PSU_REG_COUNT];
-scpi_psu_t scpi_psu_context = { scpi_psu_regs, 1 };
+static scpi_reg_val_t g_scpiPsuRegs[SCPI_PSU_REG_COUNT];
+static scpi_psu_t g_scpiPsuContext = { g_scpiPsuRegs };
 
-scpi_interface_t scpi_interface = {
+static scpi_interface_t g_scpiInterface = {
     SCPI_Error,
     SCPI_Write,
     SCPI_Control,
@@ -89,10 +101,12 @@ scpi_interface_t scpi_interface = {
     SCPI_Reset,
 };
 
-char scpi_input_buffer[SCPI_PARSER_INPUT_BUFFER_LENGTH];
-int16_t error_queue_data[SCPI_PARSER_ERROR_QUEUE_SIZE + 1];
+static char g_scpiInputBuffer[SCPI_PARSER_INPUT_BUFFER_LENGTH];
+static int16_t g_errorQueueData[SCPI_PARSER_ERROR_QUEUE_SIZE + 1];
 
 scpi_t g_scpiContext;
+
+static bool g_isConnected;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -136,28 +150,43 @@ void init() {
 #endif
 
     scpi::init(g_scpiContext,
-        scpi_psu_context,
-        &scpi_interface,
-        scpi_input_buffer, SCPI_PARSER_INPUT_BUFFER_LENGTH,
-        error_queue_data, SCPI_PARSER_ERROR_QUEUE_SIZE + 1);
-
-    g_isConnected = false;
+        g_scpiPsuContext,
+        &g_scpiInterface,
+        g_scpiInputBuffer, SCPI_PARSER_INPUT_BUFFER_LENGTH,
+        g_errorQueueData, SCPI_PARSER_ERROR_QUEUE_SIZE + 1);
 
     g_testResult = TEST_OK;
 }
 
 void tick(uint32_t tick_usec) {
     if (g_testResult == TEST_OK) {
-        for (unsigned i = 0; i < 64 && SERIAL_PORT.available(); ++i) {
-            g_isConnected = true;
-            char ch = (char)SERIAL_PORT.read();
-            input(g_scpiContext, ch);
-        }
+		bool isConnected = (bool)SERIAL_PORT;
+
+		if (isConnected != g_isConnected) {
+			g_isConnected = isConnected;
+			if (g_isConnected) {
+				scpi::emptyBuffer(g_scpiContext);
+			}
+		}
+
+		if (g_isConnected) {
+			size_t n = SERIAL_PORT.available();
+			if (n > 0) {
+				char buffer[CONF_CHUNK_SIZE];
+				if (n > CONF_CHUNK_SIZE) {
+					n = CONF_CHUNK_SIZE;
+				}
+				for (size_t i = 0; i < n; ++i) {
+					buffer[i] = (char)SERIAL_PORT.read();
+				}
+				input(g_scpiContext, buffer, n);
+			}
+		}
     }
 }
 
 bool isConnected() {
-    return g_isConnected;
+    return g_testResult == TEST_OK && g_isConnected;
 }
 
 void update() {

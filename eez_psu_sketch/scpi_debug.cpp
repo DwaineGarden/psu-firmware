@@ -22,10 +22,7 @@
 #include "temperature.h"
 #include "fan.h"
 #include "serial_psu.h"
-
-#if OPTION_SD_CARD
-#include "sd_card.h"
-#endif
+#include "fan.h"
 
 namespace eez {
 namespace psu {
@@ -47,14 +44,14 @@ scpi_result_t scpi_cmd_debug(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif // CONF_DEBUG
 }
 
 scpi_result_t scpi_cmd_debugQ(scpi_t *context) {
 #if CONF_DEBUG
-    char buffer[2048];
+    char buffer[4096];
 
     Channel::get(0).adcReadAll();
     Channel::get(1).adcReadAll();
@@ -65,7 +62,7 @@ scpi_result_t scpi_cmd_debugQ(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif // CONF_DEBUG
 }
@@ -73,7 +70,7 @@ scpi_result_t scpi_cmd_debugQ(scpi_t *context) {
 scpi_result_t scpi_cmd_debugWdog(scpi_t * context) {
 #if CONF_DEBUG
     if (!OPTION_WATCHDOG) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
     }
 
@@ -86,7 +83,7 @@ scpi_result_t scpi_cmd_debugWdog(scpi_t * context) {
     
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif // CONF_DEBUG
 }
@@ -94,7 +91,7 @@ scpi_result_t scpi_cmd_debugWdog(scpi_t * context) {
 scpi_result_t scpi_cmd_debugWdogQ(scpi_t * context) {
 #if CONF_DEBUG
     if (!OPTION_WATCHDOG) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
     }
 
@@ -102,7 +99,7 @@ scpi_result_t scpi_cmd_debugWdogQ(scpi_t * context) {
     
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif // CONF_DEBUG
 }
@@ -126,41 +123,9 @@ scpi_result_t scpi_cmd_debugOntimeQ(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif // CONF_DEBUG
-}
-
-scpi_result_t scpi_cmd_debugDirQ(scpi_t *context) {
-#if CONF_DEBUG && OPTION_SD_CARD
-    sd_card::dir();
-    return SCPI_RES_OK;
-#else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
-    return SCPI_RES_ERR;
-#endif
-}
-
-scpi_result_t scpi_cmd_debugFileQ(scpi_t *context) {
-#if CONF_DEBUG && OPTION_SD_CARD
-    const char *param;
-    size_t len;
-
-    if (!SCPI_ParamCharacters(context, &param, &len, true)) {
-        return SCPI_RES_ERR;
-    }
-
-    char path[MAX_PATH_LENGTH];
-    strncpy(path, param, len);
-    path[len] = 0;
-
-    sd_card::dumpFile(path);
-
-    return SCPI_RES_OK;
-#else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
-    return SCPI_RES_ERR;
-#endif
 }
 
 scpi_result_t scpi_cmd_debugVoltage(scpi_t *context) {
@@ -179,7 +144,7 @@ scpi_result_t scpi_cmd_debugVoltage(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif // CONF_DEBUG
 }
@@ -200,7 +165,7 @@ scpi_result_t scpi_cmd_debugCurrent(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif // CONF_DEBUG
 }
@@ -243,7 +208,7 @@ scpi_result_t scpi_cmd_debugMeasureVoltage(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif // CONF_DEBUG
 }
@@ -286,9 +251,72 @@ scpi_result_t scpi_cmd_debugMeasureCurrent(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif // CONF_DEBUG
+}
+
+scpi_result_t scpi_cmd_debugFan(scpi_t * context) {
+	int32_t fanSpeed;
+	if (!SCPI_ParamInt(context, &fanSpeed, TRUE)) {
+		return SCPI_RES_ERR;
+	}
+
+	if (fanSpeed < 0) {
+		fan::g_fanManualControl = false;
+	}
+	else {
+		fan::g_fanManualControl = true;
+
+		if (fanSpeed > 255) {
+			fanSpeed = 255;
+		}
+
+		fan::g_fanSpeedPWM = fanSpeed;
+		analogWrite(FAN_PWM, fan::g_fanSpeedPWM);
+	}
+
+	return SCPI_RES_OK;
+}
+
+scpi_result_t scpi_cmd_debugFanQ(scpi_t * context) {
+	SCPI_ResultInt(context, fan::g_fanSpeedPWM);
+
+	return SCPI_RES_OK;
+}
+
+scpi_result_t scpi_cmd_debugFanPid(scpi_t * context) {
+	double Kp;
+	if (!SCPI_ParamDouble(context, &Kp, TRUE)) {
+		return SCPI_RES_ERR;
+	}
+
+	double Ki;
+	if (!SCPI_ParamDouble(context, &Ki, TRUE)) {
+		return SCPI_RES_ERR;
+	}
+
+	double Kd;
+	if (!SCPI_ParamDouble(context, &Kd, TRUE)) {
+		return SCPI_RES_ERR;
+	}
+
+	int32_t POn;
+	if (!SCPI_ParamInt(context, &POn, TRUE)) {
+		return SCPI_RES_ERR;
+	}
+
+	fan::setPidTunings(Kp, Ki, Kd, POn);
+
+	return SCPI_RES_OK;
+}
+
+scpi_result_t scpi_cmd_debugFanPidQ(scpi_t * context) {
+	double Kp[4] = { fan::g_Kp, fan::g_Ki, fan::g_Kd, fan::g_POn * 1.0f };
+
+	SCPI_ResultArrayDouble(context, Kp, 4, SCPI_FORMAT_ASCII);
+
+	return SCPI_RES_OK;
 }
 
 

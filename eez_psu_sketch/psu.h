@@ -93,7 +93,6 @@ void setOperBits(int bit_mask, bool on);
 
 void generateError(int16_t error);
 
-const char *getModelName();
 const char *getCpuModel();
 const char *getCpuType();
 const char *getCpuEthernetType();
@@ -126,6 +125,8 @@ extern RLState g_rlState;
 extern bool g_rprogAlarm;
 
 bool isFrontPanelLocked();
+
+typedef void(*ActionExecFunc)();
 
 }
 } // namespace eez::psu

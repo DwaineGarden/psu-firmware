@@ -43,6 +43,8 @@ static const int EVENT_TYPE_ERROR = 3;
     EVENT_ERROR(CH2_OVP_TRIPPED,  3, "Ch2 OVP tripped") \
     EVENT_ERROR(CH2_OCP_TRIPPED,  4, "Ch2 OCP tripped") \
     EVENT_ERROR(CH2_OPP_TRIPPED,  5, "Ch2 OPP tripped") \
+	EVENT_ERROR(FILE_UPLOAD_FAILED,  6, "File upload failed") \
+	EVENT_ERROR(FILE_DOWNLOAD_FAILED,  7, "File download failed") \
     EVENT_ERROR(AUX_OTP_TRIPPED, 39, "AUX OTP tripped") \
     EVENT_ERROR(CH1_OTP_TRIPPED,  40, "CH1 OTP tripped") \
     EVENT_ERROR(CH2_OTP_TRIPPED,  41, "CH2 OTP tripped") \
@@ -55,6 +57,8 @@ static const int EVENT_TYPE_ERROR = 3;
     EVENT_WARNING(CH1_UNKNOWN_PWRGOOD_STATE, 4, "Ch1 unknown PWRGOOD") \
     EVENT_WARNING(CH2_UNKNOWN_PWRGOOD_STATE, 5, "Ch2 unknown PWRGOOD") \
     EVENT_WARNING(NTP_REFRESH_FAILED, 6, "NTP refresh failed") \
+	EVENT_WARNING(FILE_UPLOAD_ABORTED, 7, "File upload aborted") \
+	EVENT_WARNING(FILE_DOWNLOAD_ABORTED, 8, "File download aborted") \
     EVENT_INFO(WELCOME, 0, "Welcome!") \
     EVENT_INFO(POWER_UP, 1, "Power up") \
     EVENT_INFO(POWER_DOWN, 2, "Power down") \
@@ -112,7 +116,9 @@ static const int EVENT_TYPE_ERROR = 3;
     EVENT_INFO(FORCE_DISABLING_ALL_OUTPUTS_ON_POWERUP_DISABLED, 101, "Force disabling outputs disabled") \
     EVENT_INFO(FRONT_PANEL_LOCKED, 102, "Front panel locked") \
     EVENT_INFO(FRONT_PANEL_UNLOCKED, 103, "Front panel unlocked") \
-    
+    EVENT_INFO(RECALL_FROM_FILE, 104, "Recall from file") \
+	EVENT_INFO(FILE_UPLOAD_SUCCEEDED,  105, "File upload succeeded") \
+	EVENT_INFO(FILE_DOWNLOAD_SUCCEEDED,  106, "File download succeeded") \
 
 #define EVENT_ERROR_START_ID 10000
 #define EVENT_WARNING_START_ID 12000

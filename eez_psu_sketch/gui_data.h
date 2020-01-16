@@ -24,6 +24,10 @@
 namespace eez {
 namespace psu {
 namespace gui {
+
+struct WidgetCursor;
+struct Style;
+
 namespace data {
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -194,6 +198,7 @@ struct Cursor {
 extern Value g_alertMessage;
 extern Value g_alertMessage2;
 extern Value g_alertMessage3;
+extern Value g_progress;
 
 int count(uint8_t id);
 void select(Cursor &cursor, uint8_t id, int index);
@@ -218,6 +223,8 @@ Value getHistoryValue(const Cursor &cursor, uint8_t id, int position);
 
 bool isBlinking(const Cursor &cursor, uint8_t id);
 Value getEditValue(const Cursor &cursor, uint8_t id);
+
+uint16_t getWidgetBackgroundColor(const WidgetCursor& widgetCursor, const Style* style);
 
 }
 }

@@ -15,10 +15,12 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
- 
+
 #pragma once
 
-#include <SD.h>
+#include <SdFat.h>
+
+extern SdFat SD;
 
 namespace eez {
 namespace psu {
@@ -29,18 +31,28 @@ extern TestResult g_testResult;
 void init();
 bool test();
 
+void dumpInfo(char *buffer);
+
 void matchZeroOrMoreSpaces(File& file);
 bool match(File& file, float &result);
 bool match(File& file, char c);
 
 bool makeParentDir(const char *filePath);
 
-#if CONF_DEBUG
-void dir();
-void dumpFile(const char *path);
-#endif
+bool exists(const char *dirPath, int *err);
+bool catalog(const char *dirPath, void *param, void (*callback)(void *param, const char *name, const char *type, size_t size), int *err);
+bool catalogLength(const char *dirPath, size_t *length, int *err);
+bool upload(const char *filePath, void *param, void (*callback)(void *param, const void *buffer, size_t size), int *err);
+bool download(const char *filePath, bool truncate, const void *buffer, size_t size, int *err);
+bool moveFile(const char *sourcePath, const char *destinationPath, int *err);
+bool copyFile(const char *sourcePath, const char *destinationPath, int *err);
+bool deleteFile(const char *filePath, int *err);
+bool makeDir(const char *dirPath, int *err);
+bool removeDir(const char *dirPath, int *err);
+bool getDate(const char *filePath, uint8_t &year, uint8_t &month, uint8_t &day, int *err);
+bool getTime(const char *filePath, uint8_t &hour, uint8_t &minute, uint8_t &second, int *err);
 
-
+bool getInfo(uint64_t &usedSpace, uint64_t &freeSpace);
 
 }
 }

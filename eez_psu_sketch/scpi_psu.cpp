@@ -29,9 +29,13 @@
 #include "watchdog.h"
 #endif
 
+#include "idle.h"
+
 namespace eez {
 namespace psu {
 namespace scpi {
+
+bool g_busy;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -61,9 +65,6 @@ static const scpi_command_t scpi_commands[] = {
 
 #endif
 
-static bool g_wasActive = false;
-static uint32_t g_timeOfLastActivity;
-
 ////////////////////////////////////////////////////////////////////////////////
 
 void init(scpi_t &scpi_context,
@@ -75,59 +76,54 @@ void init(scpi_t &scpi_context,
     int16_t error_queue_size)
 {
     SCPI_Init(&scpi_context, scpi_commands, interface, scpi_units_def,
-        MANUFACTURER, psu::getModelName(), persist_conf::devConf.serialNumber, FIRMWARE,
+        IDN_MANUFACTURER, IDN_MODEL, persist_conf::devConf.serialNumber, FIRMWARE,
         input_buffer, input_buffer_length, error_queue_data, error_queue_size);
+
+	scpi_psu_context.selected_channel_index = 1;
+#if OPTION_SD_CARD
+	scpi_psu_context.currentDirectory[0] = 0;
+#endif
+	scpi_psu_context.isBufferOverrun = false;
+	scpi_psu_context.bufferOverrunTime =  0;
 
     scpi_context.user_context = &scpi_psu_context;
 }
 
-void tick(uint32_t tickCount) {
-    if (g_wasActive) {
-        g_timeOfLastActivity = tickCount;
-        if (g_timeOfLastActivity == 0) {
-            g_timeOfLastActivity = 1;
-        }
-        g_wasActive = false;
-    } else if (g_timeOfLastActivity != 0 && tickCount - g_timeOfLastActivity >= SCPI_IDLE_TIMEOUT * 1000000L) {
-        g_timeOfLastActivity = 0;
-    } 
+void emptyBuffer(scpi_t &context) {
+	SCPI_Input(&context, 0, 0);
 }
 
-void input(scpi_t &scpi_context, char ch) {
-    g_wasActive = true;
-    //if (ch < 0 || ch > 127) {
-    //    // non ASCII, call parser now
-    //    SCPI_Input(&scpi_context, 0, 0);
-    //    return;
-    //}
-
-    int result = SCPI_Input(&scpi_context, &ch, 1);
-    if (result == -1) {
-        // TODO we need better buffer overrun handling here
-
-        // call parser now
-        SCPI_Input(&scpi_context, 0, 0);
-
-        // input buffer is now empty, feed it
-        SCPI_Input(&scpi_context, &ch, 1);
-    }
+void onBufferOverrun(scpi_t &context) {
+	emptyBuffer(context);
+	scpi_psu_t *psu_context = (scpi_psu_t *)context.user_context;
+	psu_context->isBufferOverrun = true;
+	psu_context->bufferOverrunTime = micros();
 }
 
-void input(scpi_t &scpi_context, const char *str, size_t size) {
-    g_wasActive = true;
-    //if (ch < 0 || ch > 127) {
-    //    // non ASCII, call parser now
-    //    SCPI_Input(&scpi_context, 0, 0);
-    //    return;
-    //}
+void input(scpi_t &context, const char *str, size_t size) {
+    idle::noteScpiActivity();
 
-    int result = SCPI_Input(&scpi_context, str, size);
-    if (result == -1) {
-        // TODO we need better buffer overrun handling here
+	scpi_psu_t *psu_context = (scpi_psu_t *)context.user_context;
+	if (psu_context->isBufferOverrun) {
+		// wait for 500ms of idle input to declare buffer overrun finished
+		uint32_t tickCount = micros();
+		int32_t diff = tickCount - psu_context->bufferOverrunTime;
+		if (diff > 500000) {
+			psu_context->isBufferOverrun = false;
+		} else {
+			psu_context->bufferOverrunTime = tickCount;
+			return;
+		}
+	}
 
-        // call parser now
-        SCPI_Input(&scpi_context, 0, 0);
-    }
+    g_busy = true;
+
+	int result = SCPI_Input(&context, str, size);
+	if (result == -1) {
+		onBufferOverrun(context);
+	}
+
+    g_busy = false;
 }
 
 void printError(int_fast16_t err) {
@@ -136,13 +132,15 @@ void printError(int_fast16_t err) {
     if (serial::g_testResult == TEST_OK) {
         char errorOutputBuffer[256];
 
+        SERIAL_PORT.print("**ERROR");
+
         char datetime_buffer[20] = { 0 };
         if (datetime::getDateTimeAsString(datetime_buffer)) {
-            sprintf_P(errorOutputBuffer, PSTR("**ERROR [%s]: %d,\"%s\"\r\n"), datetime_buffer, (int16_t)err, SCPI_ErrorTranslate(err));
-        } else {
-            sprintf_P(errorOutputBuffer, PSTR("**ERROR: %d,\"%s\"\r\n"), (int16_t)err, SCPI_ErrorTranslate(err));
+            sprintf_P(errorOutputBuffer, PSTR(" [%s]"), datetime_buffer);
+            SERIAL_PORT.print(errorOutputBuffer);
         }
 
+        sprintf_P(errorOutputBuffer, PSTR(": %d,\"%s\""), (int16_t)err, SCPI_ErrorTranslate(err));
         SERIAL_PORT.println(errorOutputBuffer);
     }
 
@@ -151,7 +149,7 @@ void printError(int_fast16_t err) {
 #endif
 }
 
-void resultChoiceName(scpi_t * context, scpi_choice_def_t *choice, int tag) {
+void resultChoiceName(scpi_t *context, scpi_choice_def_t *choice, int tag) {
     for (; choice->name; ++choice) {
         if (choice->tag == tag) {
             char text[64];
@@ -170,8 +168,16 @@ void resultChoiceName(scpi_t * context, scpi_choice_def_t *choice, int tag) {
     }
 }
 
-bool isIdle() {
-    return g_timeOfLastActivity == 0;
+void resetContext(scpi_t *context) {
+    scpi_psu_t *psuContext = (scpi_psu_t *)context->user_context;
+
+    psuContext->selected_channel_index = 1;
+
+#if OPTION_SD_CARD
+    psuContext->currentDirectory[0] = 0;
+#endif
+
+    SCPI_ErrorClear(context);
 }
 
 }

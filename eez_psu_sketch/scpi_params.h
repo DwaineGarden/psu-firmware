@@ -56,6 +56,9 @@ scpi_result_t result_float(scpi_t *context, Channel *channel, float value, Value
 bool get_profile_location_param(scpi_t *context, int &location, bool all_locations = false);
 
 void outputOnTime(scpi_t* context, uint32_t time);
+bool checkPassword(scpi_t *context, const char *againstPassword);
+
+bool getFilePath(scpi_t *context, char *filePath, bool mandatory);
 
 }
 }

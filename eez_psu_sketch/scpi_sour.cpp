@@ -163,7 +163,7 @@ scpi_result_t scpi_cmd_sourceCurrentLevelImmediateAmplitude(scpi_t * context) {
         return SCPI_RES_ERR;
 	}
 
-    if (util::greater(current * channel_dispatcher::getUSet(*channel), channel_dispatcher::getPowerLimit(*channel), getPrecision(VALUE_TYPE_FLOAT_WATT))) {
+    if (util::greater(current * channel_dispatcher::getUSetUnbalanced(*channel), channel_dispatcher::getPowerLimit(*channel), getPrecision(VALUE_TYPE_FLOAT_WATT))) {
         SCPI_ErrorPush(context, SCPI_ERROR_POWER_LIMIT_EXCEEDED);
         return SCPI_RES_ERR;
     }
@@ -214,7 +214,7 @@ scpi_result_t scpi_cmd_sourceVoltageLevelImmediateAmplitude(scpi_t * context) {
         return SCPI_RES_ERR;
 	}
 
-	if (util::greater(voltage * channel_dispatcher::getISet(*channel), channel_dispatcher::getPowerLimit(*channel), getPrecision(VALUE_TYPE_FLOAT_WATT))) {
+	if (util::greater(voltage * channel_dispatcher::getISetUnbalanced(*channel), channel_dispatcher::getPowerLimit(*channel), getPrecision(VALUE_TYPE_FLOAT_WATT))) {
         SCPI_ErrorPush(context, SCPI_ERROR_POWER_LIMIT_EXCEEDED);
         return SCPI_RES_ERR;
     }
@@ -534,7 +534,7 @@ scpi_result_t scpi_cmd_sourceVoltageSenseSource(scpi_t * context) {
     }
 
     if (!OPTION_BP) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
     }
 
@@ -560,7 +560,7 @@ scpi_result_t scpi_cmd_sourceVoltageSenseSourceQ(scpi_t * context) {
     }
 
     if (!OPTION_BP) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
     }
 
@@ -591,7 +591,7 @@ scpi_result_t scpi_cmd_sourceVoltageProgramSource(scpi_t * context) {
     }
 
     if (!(channel->getFeatures() & CH_FEATURE_RPROG)) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
     }
 
@@ -622,7 +622,7 @@ scpi_result_t scpi_cmd_sourceVoltageProgramSourceQ(scpi_t * context) {
     }
 
     if (!(channel->getFeatures() & CH_FEATURE_RPROG)) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
     }
 
@@ -643,7 +643,7 @@ scpi_result_t scpi_cmd_sourceLripple(scpi_t * context) {
     }
 
     if (!(channel->getFeatures() & CH_FEATURE_LRIPPLE)) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
     }
 
@@ -672,7 +672,7 @@ scpi_result_t scpi_cmd_sourceLrippleQ(scpi_t * context) {
     }
 
     if (!(channel->getFeatures() & CH_FEATURE_RPROG)) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
     }
 
@@ -693,7 +693,7 @@ scpi_result_t scpi_cmd_sourceLrippleAuto(scpi_t * context) {
     }
 
     if (!(channel->getFeatures() & CH_FEATURE_RPROG)) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
     }
 
@@ -719,7 +719,7 @@ scpi_result_t scpi_cmd_sourceLrippleAutoQ(scpi_t * context) {
     }
 
     if (!(channel->getFeatures() & CH_FEATURE_LRIPPLE)) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
     }
 
@@ -1042,7 +1042,7 @@ scpi_result_t scpi_cmd_sourceListCurrentLevel(scpi_t *context) {
 
         float current = (float)param.value;
 
-        if (listLength > MAX_LIST_LENGTH) {
+        if (listLength >= MAX_LIST_LENGTH) {
             SCPI_ErrorPush(context, SCPI_ERROR_TOO_MANY_LIST_POINTS);
             return SCPI_RES_ERR;
         }
@@ -1113,7 +1113,7 @@ scpi_result_t scpi_cmd_sourceListDwell(scpi_t *context) {
 
         float dwell = (float)param.value;
 
-        if (listLength >MAX_LIST_LENGTH) {
+        if (listLength >= MAX_LIST_LENGTH) {
             SCPI_ErrorPush(context, SCPI_ERROR_TOO_MANY_LIST_POINTS);
             return SCPI_RES_ERR;
         }
@@ -1175,7 +1175,7 @@ scpi_result_t scpi_cmd_sourceListVoltageLevel(scpi_t *context) {
 
         float voltage = (float)param.value;
 
-        if (listLength > MAX_LIST_LENGTH) {
+        if (listLength >= MAX_LIST_LENGTH) {
             SCPI_ErrorPush(context, SCPI_ERROR_TOO_MANY_LIST_POINTS);
             return SCPI_RES_ERR;
         }
@@ -1220,193 +1220,6 @@ scpi_result_t scpi_cmd_sourceListVoltageLevelQ(scpi_t *context) {
     uint16_t listLength;
     float *list = list::getVoltageList(*channel, &listLength);
     SCPI_ResultArrayFloat(context, list, listLength, SCPI_FORMAT_ASCII);
-
-    return SCPI_RES_OK;
-}
-
-scpi_result_t scpi_cmd_sourceDigitalInputDataQ(scpi_t *context) {
-    int32_t pin;
-    if (!SCPI_ParamInt(context, &pin, TRUE)) {
-        return SCPI_RES_ERR;
-    }
-
-    if (pin != 1) {
-        SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
-        return SCPI_RES_ERR;
-    }
-
-    if (persist_conf::devConf2.ioPins[pin - 1].function != io_pins::FUNCTION_INPUT) {
-        SCPI_ErrorPush(context, SCPI_ERROR_DIGITAL_PIN_FUNCTION_MISMATCH);
-        return SCPI_RES_ERR;
-    }
-
-    bool state = digitalRead(EXT_TRIG) ? true : false;
-
-    if (persist_conf::devConf2.ioPins[pin - 1].polarity == io_pins::POLARITY_NEGATIVE) {
-        state = !state;
-    }
-
-    SCPI_ResultInt(context, state ? 1 : 0);
-
-    return SCPI_RES_OK;
-}
-
-scpi_result_t scpi_cmd_sourceDigitalOutputData(scpi_t *context) {
-#if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R5B12
-    int32_t pin;
-    if (!SCPI_ParamInt(context, &pin, TRUE)) {
-        return SCPI_RES_ERR;
-    }
-
-    if (pin != 2 && pin != 3) {
-        SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
-        return SCPI_RES_ERR;
-    }
-
-    if (persist_conf::devConf2.ioPins[pin - 1].function != io_pins::FUNCTION_OUTPUT) {
-        SCPI_ErrorPush(context, SCPI_ERROR_DIGITAL_PIN_FUNCTION_MISMATCH);
-        return SCPI_RES_ERR;
-    }
-
-    bool state;
-	if (!SCPI_ParamBool(context, &state, TRUE)) {
-		return SCPI_RES_ERR;
-	}
-
-    if (persist_conf::devConf2.ioPins[pin - 1].polarity == io_pins::POLARITY_NEGATIVE) {
-        state = !state;
-    }
-
-    if (pin == 2) {
-        digitalWrite(DOUT, state);
-    } else {
-        digitalWrite(DOUT2, state);
-    }
-
-    return SCPI_RES_OK;
-#else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
-
-    return SCPI_RES_ERR;
-#endif
-}
-
-static scpi_choice_def_t functionChoice[] = {
-    { "NONE", io_pins::FUNCTION_NONE },
-    { "DINPut", io_pins::FUNCTION_INPUT },
-    { "DOUTput", io_pins::FUNCTION_OUTPUT },
-    { "FAULt", io_pins::FUNCTION_FAULT },
-    { "INHibit", io_pins::FUNCTION_INHIBIT },
-    { "ONCouple", io_pins::FUNCTION_ON_COUPLE },
-    { "TINPut", io_pins::FUNCTION_TINPUT },
-    { "TOUTput", io_pins::FUNCTION_TOUTPUT },
-    SCPI_CHOICE_LIST_END
-};
-
-scpi_result_t scpi_cmd_sourceDigitalPinFunction(scpi_t *context) {
-    int32_t pin;
-    SCPI_CommandNumbers(context, &pin, 1, 1);
-    if (pin < 1 || pin > 3) {
-        SCPI_ErrorPush(context, SCPI_ERROR_HEADER_SUFFIX_OUTOFRANGE);
-        return SCPI_RES_ERR;
-    }
-#if EEZ_PSU_SELECTED_REVISION != EEZ_PSU_REVISION_R5B12
-    if (pin != 1) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
-        return SCPI_RES_ERR;
-    }
-#endif
-
-    int32_t function;
-    if (!SCPI_ParamChoice(context, functionChoice, &function, true)) {
-        return SCPI_RES_ERR;
-    }
-    
-    if (pin == 1) {
-        if (function != io_pins::FUNCTION_NONE && function != io_pins::FUNCTION_INPUT && function != io_pins::FUNCTION_INHIBIT && function != io_pins::FUNCTION_TINPUT) {
-            SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
-            return SCPI_RES_ERR;
-        }
-    } else {
-        if (function != io_pins::FUNCTION_NONE && function != io_pins::FUNCTION_OUTPUT && function != io_pins::FUNCTION_FAULT && function != io_pins::FUNCTION_ON_COUPLE && function != io_pins::FUNCTION_TOUTPUT) {
-            SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
-            return SCPI_RES_ERR;
-        }
-    }
-
-    persist_conf::devConf2.ioPins[pin - 1].function = function;
-
-    io_pins::refresh();
-
-    return SCPI_RES_OK;
-}
-
-scpi_result_t scpi_cmd_sourceDigitalPinFunctionQ(scpi_t *context) {
-    int32_t pin;
-    SCPI_CommandNumbers(context, &pin, 1, 1);
-    if (pin < 1 || pin > 3) {
-        SCPI_ErrorPush(context, SCPI_ERROR_HEADER_SUFFIX_OUTOFRANGE);
-        return SCPI_RES_ERR;
-    }
-#if EEZ_PSU_SELECTED_REVISION != EEZ_PSU_REVISION_R5B12
-    if (pin != 1) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
-        return SCPI_RES_ERR;
-    }
-#endif
-
-    resultChoiceName(context, functionChoice, persist_conf::devConf2.ioPins[pin - 1].function);
-
-    return SCPI_RES_OK;
-}
-
-static scpi_choice_def_t polarityChoice[] = {
-    { "POSitive", io_pins::POLARITY_POSITIVE },
-    { "NEGative", io_pins::POLARITY_NEGATIVE },
-    SCPI_CHOICE_LIST_END
-};
-
-scpi_result_t scpi_cmd_sourceDigitalPinPolarity(scpi_t *context) {
-    int32_t pin;
-    SCPI_CommandNumbers(context, &pin, 1, 1);
-    if (pin < 1 || pin > 3) {
-        SCPI_ErrorPush(context, SCPI_ERROR_HEADER_SUFFIX_OUTOFRANGE);
-        return SCPI_RES_ERR;
-    }
-#if EEZ_PSU_SELECTED_REVISION != EEZ_PSU_REVISION_R5B12
-    if (pin != 1) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
-        return SCPI_RES_ERR;
-    }
-#endif
-
-    int32_t polarity;
-    if (!SCPI_ParamChoice(context, polarityChoice, &polarity, true)) {
-        return SCPI_RES_ERR;
-    }
-    
-    persist_conf::devConf2.ioPins[pin - 1].polarity = polarity;
-
-    io_pins::refresh();
-
-    return SCPI_RES_OK;
-}
-
-scpi_result_t scpi_cmd_sourceDigitalPinPolarityQ(scpi_t *context) {
-    int32_t pin;
-    SCPI_CommandNumbers(context, &pin, 1, 1);
-    if (pin < 1 || pin > 3) {
-        SCPI_ErrorPush(context, SCPI_ERROR_HEADER_SUFFIX_OUTOFRANGE);
-        return SCPI_RES_ERR;
-    }
-#if EEZ_PSU_SELECTED_REVISION != EEZ_PSU_REVISION_R5B12
-    if (pin != 1) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
-        return SCPI_RES_ERR;
-    }
-#endif
-
-    resultChoiceName(context, polarityChoice, persist_conf::devConf2.ioPins[pin - 1].polarity);
 
     return SCPI_RES_OK;
 }

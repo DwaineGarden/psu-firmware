@@ -580,6 +580,25 @@ bool parseTimeZone(const char *timeZoneStr, size_t timeZoneLength, int16_t &time
     return true;
 }
 
+void replaceCharacter(char *str, char ch, char repl) {
+    while (*str) {
+        if (*str == ch) {
+            *str = repl;
+        }
+        ++str;
+    }
+}
+
+bool endsWith(const char *str, const char *suffix) {
+    if (!str || !suffix)
+        return false;
+    size_t strLen = strlen(str);
+    size_t suffixLen = strlen(suffix);
+    if (suffixLen > strLen)
+        return false;
+    return strncmp(str + strLen - suffixLen, suffix, suffixLen) == 0;
+}
+
 }
 }
 } // namespace eez::psu::util

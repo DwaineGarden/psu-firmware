@@ -38,11 +38,16 @@ void showStandbyPage();
 void showEnteringStandbyPage();
 void showEthernetInit();
 
+void showAsyncOperationInProgress(const char *message, void (*checkStatus)() = 0);
+void hideAsyncOperationInProgress();
+
+void showProgressPage(const char *message, void (*abortCallback)() = 0);
+bool updateProgressPage(size_t processedSoFar, size_t totalSize);
+void hideProgressPage();
+
 void setTextMessage(const char *message, unsigned int len);
 void clearTextMessage();
 const char *getTextMessage();
-
-bool isIdle();
 
 bool isActivePage(int pageId);
 

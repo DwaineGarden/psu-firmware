@@ -40,6 +40,7 @@
 #include "channel_dispatcher.h"
 #include "list.h"
 #include "trigger.h"
+#include "io_pins.h"
 
 namespace eez {
 namespace psu {
@@ -353,6 +354,10 @@ Channel::Channel(
     ytViewRate = GUI_YT_VIEW_RATE_DEFAULT;
 
     autoRangeCheckLastTickCount = 0;
+
+    flags.cvMode = 0;
+    flags.ccMode = 0;
+    updateCcAndCvSwitch();
 }
 
 void Channel::protectionEnter(ProtectionValue &cpv) {
@@ -377,16 +382,6 @@ void Channel::protectionEnter(ProtectionValue &cpv) {
     }
 
     event_queue::pushEvent(eventId);
-
-    if (channel_dispatcher::isCoupled() && index == 1) {
-        if (IS_OVP_VALUE(this, cpv)) {
-            Channel::get(1).protectionEnter(Channel::get(1).ovp);
-        } else if (IS_OCP_VALUE(this, cpv)) {
-            Channel::get(1).protectionEnter(Channel::get(1).ocp);
-        } else {
-            Channel::get(1).protectionEnter(Channel::get(1).opp);
-        }
-    }
 
     onProtectionTripped();
 }
@@ -709,7 +704,7 @@ void Channel::tick(uint32_t tick_usec) {
     }
 
     // turn off DP after delay
-    if (delayed_dp_off && tick_usec - delayed_dp_off_start >= DP_OFF_DELAY_PERIOD * 1000000L) {
+    if (delayed_dp_off && (micros() - delayed_dp_off_start) >= DP_OFF_DELAY_PERIOD * 1000000L) {
         delayed_dp_off = false;
         doDpEnable(false);
     }
@@ -757,8 +752,8 @@ void Channel::tick(uint32_t tick_usec) {
 #endif
 
     if (historyPosition == -1) {
-        uHistory[0] = util::roundPrec(u.mon_last, VOLTAGE_NUM_SIGNIFICANT_DECIMAL_DIGITS);
-        iHistory[0] = util::roundPrec(i.mon_last, CURRENT_NUM_SIGNIFICANT_DECIMAL_DIGITS);
+        uHistory[0] = util::roundPrec(u.mon_last, getPrecisionFromNumSignificantDecimalDigits(VOLTAGE_NUM_SIGNIFICANT_DECIMAL_DIGITS));
+        iHistory[0] = util::roundPrec(i.mon_last, getPrecisionFromNumSignificantDecimalDigits(CURRENT_NUM_SIGNIFICANT_DECIMAL_DIGITS));
         for (int i = 1; i < CHANNEL_HISTORY_SIZE; ++i) {
             uHistory[i] = 0;
             iHistory[i] = 0;
@@ -770,8 +765,8 @@ void Channel::tick(uint32_t tick_usec) {
         uint32_t ytViewRateMicroseconds = (int)round(ytViewRate * 1000000L); 
 
         while (tick_usec - historyLastTick >= ytViewRateMicroseconds) {
-            uHistory[historyPosition] = util::roundPrec(u.mon_last, VOLTAGE_NUM_SIGNIFICANT_DECIMAL_DIGITS);
-            iHistory[historyPosition] = util::roundPrec(i.mon_last, CURRENT_NUM_SIGNIFICANT_DECIMAL_DIGITS);
+            uHistory[historyPosition] = util::roundPrec(u.mon_last, getPrecisionFromNumSignificantDecimalDigits(VOLTAGE_NUM_SIGNIFICANT_DECIMAL_DIGITS));
+            iHistory[historyPosition] = util::roundPrec(i.mon_last, getPrecisionFromNumSignificantDecimalDigits(CURRENT_NUM_SIGNIFICANT_DECIMAL_DIGITS));
                 
             if (++historyPosition == CHANNEL_HISTORY_SIZE) {
                 historyPosition = 0;
@@ -967,6 +962,8 @@ void Channel::setCcMode(bool cc_mode) {
     if (cc_mode != flags.ccMode) {
         flags.ccMode = cc_mode;
 
+        updateCcAndCvSwitch();
+
         setOperBits(OPER_ISUM_CC, cc_mode);
         setQuesBits(QUES_ISUM_VOLT, cc_mode);
 
@@ -1025,13 +1022,15 @@ void Channel::eventGpio(uint8_t gpio) {
         if (rpol && isOutputEnabled()) {
             channel_dispatcher::outputEnable(*this, false);
             event_queue::pushEvent(event_queue::EVENT_ERROR_CH1_REMOTE_SENSE_REVERSE_POLARITY_DETECTED + index - 1);
-            return;
+			onProtectionTripped();
+			return;
         }
     }
 
-    setCvMode(gpio & (1 << IOExpander::IO_BIT_IN_CV_ACTIVE) ? true : false);
-    setCcMode(gpio & (1 << IOExpander::IO_BIT_IN_CC_ACTIVE) ? true : false);
-    updateCcAndCvSwitch();
+    if (!io_pins::isInhibited()) {
+        setCvMode(gpio & (1 << IOExpander::IO_BIT_IN_CV_ACTIVE) ? true : false);
+        setCcMode(gpio & (1 << IOExpander::IO_BIT_IN_CC_ACTIVE) ? true : false);
+    }
 }
 
 void Channel::adcReadMonDac() {
@@ -1091,17 +1090,7 @@ void Channel::doDpEnable(bool enable) {
     }
 }
 
-void Channel::doOutputEnable(bool enable) {
-    if (!psu::g_isBooted) {
-        flags.afterBootOutputEnabled = enable;
-        return;
-    }
-
-    if (enable && !isOk()) {
-        return;
-    }
-
-    flags.outputEnabled = enable;
+void Channel::executeOutputEnable(bool enable) {
     ioexp.changeBit(IOExpander::IO_BIT_OUT_OUTPUT_ENABLE, enable);
     setOperBits(OPER_ISUM_OE_OFF, !enable);
     bp::switchOutput(this, enable);
@@ -1128,7 +1117,6 @@ void Channel::doOutputEnable(bool enable) {
 
         setCvMode(false);
         setCcMode(false);
-        updateCcAndCvSwitch();
 
         if (calibration::isEnabled()) {
             calibration::stop();
@@ -1149,6 +1137,33 @@ void Channel::doOutputEnable(bool enable) {
         onTimeCounter.start();
     } else {
         onTimeCounter.stop();
+    }
+}
+
+void Channel::doOutputEnable(bool enable) {
+    if (!psu::g_isBooted) {
+        flags.afterBootOutputEnabled = enable;
+        return;
+    }
+
+    if (enable && !isOk()) {
+        return;
+    }
+
+    flags.outputEnabled = enable;
+
+    if (!io_pins::isInhibited()) {
+        executeOutputEnable(enable);
+    }
+}
+
+void Channel::onInhibitedChanged(bool inhibited) {
+    if (isOutputEnabled()) {
+        if (inhibited) {
+            executeOutputEnable(false);
+        } else {
+            executeOutputEnable(true);
+        }
     }
 }
 

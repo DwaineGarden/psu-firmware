@@ -60,7 +60,7 @@ int getCurrentStateBufferIndex() {
 ////////////////////////////////////////////////////////////////////////////////
 
 bool styleHasBorder(const Style *style) {
-    return style->flags & STYLE_FLAGS_BORDER;
+    return style->flags & STYLE_FLAGS_BORDER ? true : false;
 }
 
 bool styleIsHorzAlignLeft(const Style *style) {
@@ -83,9 +83,14 @@ font::Font styleGetFont(const Style *style) {
     return font::Font(style->font > 0 ? fonts[style->font - 1] : 0);
 }
 
+bool styleIsBlink(const Style *style) {
+    return style->flags & STYLE_FLAGS_BLINK ? true : false;
+}
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
-void drawText(int pageId, const char *text, int textLength, int x, int y, int w, int h, const Style *style, bool inverse, bool blink, bool ignoreLuminocity) {
+void drawText(int pageId, const char *text, int textLength, int x, int y, int w, int h, const Style *style, bool inverse, bool blink, bool ignoreLuminocity, uint16_t *overrideBackgroundColor) {
     int x1 = x;
     int y1 = y;
     int x2 = x + w - 1;
@@ -117,10 +122,17 @@ void drawText(int pageId, const char *text, int textLength, int x, int y, int w,
     else y_offset = y1 + ((y2 - y1) - height) / 2;
     if (y_offset < 0) y_offset = y1;
 
+	uint16_t backgroundColor;
+	if (overrideBackgroundColor) {
+		backgroundColor = *overrideBackgroundColor;
+	} else {
+		backgroundColor = style->background_color;
+	}
+
     if (inverse || blink) {
         lcd::lcd.setColor(style->color, ignoreLuminocity);
     } else {
-        lcd::lcd.setColor(style->background_color, ignoreLuminocity);
+        lcd::lcd.setColor(backgroundColor, ignoreLuminocity);
     }
     if (g_widgetRefresh) {
         lcd::lcd.fillRect(x1, y1, x2, y2);
@@ -140,9 +152,9 @@ void drawText(int pageId, const char *text, int textLength, int x, int y, int w,
 
     if (inverse || blink) {
         lcd::lcd.setBackColor(style->color, ignoreLuminocity);
-        lcd::lcd.setColor(style->background_color, ignoreLuminocity);
+        lcd::lcd.setColor(backgroundColor, ignoreLuminocity);
     } else {
-        lcd::lcd.setBackColor(style->background_color, ignoreLuminocity);
+        lcd::lcd.setBackColor(backgroundColor, ignoreLuminocity);
         lcd::lcd.setColor(style->color, ignoreLuminocity);
     }
     lcd::lcd.drawStr(pageId, text, textLength, x_offset, y_offset, x1, y1, x2, y2, font, !g_widgetRefresh);
@@ -366,56 +378,64 @@ void drawDisplayDataWidget(int pageId, const WidgetCursor &widgetCursor) {
 
     widgetCursor.currentState->size = sizeof(WidgetState);
     widgetCursor.currentState->flags.focused = isFocusWidget(widgetCursor);
+
+	DECL_STYLE(style, widgetCursor.currentState->flags.focused ? display_data_widget->activeStyle : widget->style);
+
     widgetCursor.currentState->flags.blinking = data::isBlinking(widgetCursor.cursor, widget->data) && g_isBlinkTime;
     widgetCursor.currentState->data = data::get(widgetCursor.cursor, 
         widgetCursor.currentState->flags.focused && getActivePageId() == PAGE_ID_EDIT_MODE_KEYPAD ? DATA_ID_KEYPAD_TEXT : widget->data);
+	widgetCursor.currentState->backgroundColor = data::getWidgetBackgroundColor(widgetCursor, style);
 
     bool refresh = !widgetCursor.previousState ||
         widgetCursor.previousState->flags.focused != widgetCursor.currentState->flags.focused ||
         widgetCursor.previousState->flags.pressed != widgetCursor.currentState->flags.pressed ||
         widgetCursor.previousState->flags.blinking != widgetCursor.currentState->flags.blinking ||
-        widgetCursor.previousState->data != widgetCursor.currentState->data;
+        widgetCursor.previousState->data != widgetCursor.currentState->data ||
+		widgetCursor.previousState->backgroundColor != widgetCursor.currentState->backgroundColor;
 
     if (refresh) {
         char text[64];
         widgetCursor.currentState->data.toText(text, sizeof(text));
 
-        DECL_STYLE(style, widgetCursor.currentState->flags.focused ? display_data_widget->activeStyle : widget->style);
-
         drawText(pageId, text, -1, widgetCursor.x, widgetCursor.y, (int)widget->w, (int)widget->h, style,
             widgetCursor.currentState->flags.pressed,
-            widgetCursor.currentState->flags.blinking);
-    }
+            widgetCursor.currentState->flags.blinking,
+			false,
+			&widgetCursor.currentState->backgroundColor);
+	}
 }
 
 void drawTextWidget(int pageId, const WidgetCursor &widgetCursor) {
     DECL_WIDGET(widget, widgetCursor.widgetOffset);
+    DECL_WIDGET_STYLE(style, widget);
 
     widgetCursor.currentState->size = sizeof(WidgetState);
+    widgetCursor.currentState->flags.blinking = styleIsBlink(style) && g_isBlinkTime;
     widgetCursor.currentState->data = widget->data ? data::get(widgetCursor.cursor, widget->data) : 0;
 
     bool refresh = !widgetCursor.previousState ||
         widgetCursor.previousState->flags.pressed != widgetCursor.currentState->flags.pressed ||
-        widgetCursor.previousState->data != widgetCursor.currentState->data;
+        widgetCursor.previousState->flags.blinking != widgetCursor.currentState->flags.blinking ||
+        widgetCursor.previousState->data != widgetCursor.currentState->data ||
+		widgetCursor.previousState->backgroundColor != widgetCursor.currentState->backgroundColor;
 
     if (refresh) {
-        DECL_WIDGET_STYLE(style, widget);
         DECL_WIDGET_SPECIFIC(TextWidget, display_string_widget, widget);
 
         if (widget->data) {
             if (widgetCursor.currentState->data.isString()) {
                 drawText(pageId, widgetCursor.currentState->data.asString(), -1, widgetCursor.x, widgetCursor.y, (int)widget->w, (int)widget->h, style,
-                    widgetCursor.currentState->flags.pressed, false, display_string_widget->flags.ignoreLuminosity);
+                    widgetCursor.currentState->flags.pressed, widgetCursor.currentState->flags.blinking, display_string_widget->flags.ignoreLuminosity);
             } else {
                 char text[64];
                 widgetCursor.currentState->data.toText(text, sizeof(text));
                 drawText(pageId, text, -1, widgetCursor.x, widgetCursor.y, (int)widget->w, (int)widget->h, style,
-                    widgetCursor.currentState->flags.pressed, false, display_string_widget->flags.ignoreLuminosity);
+                    widgetCursor.currentState->flags.pressed, widgetCursor.currentState->flags.blinking, display_string_widget->flags.ignoreLuminosity);
             }
         } else {
             DECL_STRING(text, display_string_widget->text);
             drawText(pageId, text, -1, widgetCursor.x, widgetCursor.y, (int)widget->w, (int)widget->h, style,
-                widgetCursor.currentState->flags.pressed, false, display_string_widget->flags.ignoreLuminosity);
+                widgetCursor.currentState->flags.pressed, widgetCursor.currentState->flags.blinking, display_string_widget->flags.ignoreLuminosity);
         }
     }
 }

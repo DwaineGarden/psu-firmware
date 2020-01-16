@@ -42,8 +42,13 @@
 #if OPTION_ETHERNET
 #include "ethernet.h"
 #endif
+#if OPTION_SD_CARD
+#include "dlog.h"
+#endif
 
 #define CONF_GUI_REFRESH_EVERY_MS 250
+#define CONF_DLOG_COLOR 62464
+#define CONF_LIST_COUNDOWN_DISPLAY_THRESHOLD 5 // 5 seconds
 
 namespace eez {
 namespace psu {
@@ -53,6 +58,7 @@ namespace data {
 Value g_alertMessage;
 Value g_alertMessage2;
 Value g_alertMessage3;
+Value g_progress;
 
 static struct ChannelSnapshot {
     unsigned int mode;
@@ -310,6 +316,25 @@ void Value::formatFloatValue(float &value, ValueType &valueType, int &numSignifi
     }
 }
 
+void printTime(uint32_t time, char *text, int count) {
+	int h = time / 3600;
+	int r = time - h * 3600;
+	int m = r / 60;
+	int s = r - m * 60;
+
+	if (h > 0) {
+		snprintf_P(text, count - 1, PSTR("%dh %dm"), h, m);
+	}
+	else if (m > 0) {
+		snprintf_P(text, count - 1, PSTR("%dm %ds"), m, s);
+	}
+	else {
+		snprintf_P(text, count - 1, PSTR("%ds"), s);
+	}
+
+	text[count - 1] = 0;
+}
+
 void Value::toText(char *text, int count) const {
     text[0] = 0;
 
@@ -393,26 +418,9 @@ void Value::toText(char *text, int count) const {
         ontime::counterToString(text, count, uint32_);
         break;
 
-    case VALUE_TYPE_COUNTDOWN:
-    {
-        int h = uint32_ / 3600;
-        int r = uint32_ - h * 3600;
-        int m = r / 60;
-        int s = r - m * 60;
-
-        if (h > 0) {
-		    snprintf_P(text, count-1, PSTR("%dh %dm"), h, m);
-	    } else if (m > 0) {
-		    snprintf_P(text, count-1, PSTR("%dm %ds"), m, s);
-	    } else {
-		    snprintf_P(text, count-1, PSTR("%ds"), s);
-	    }
-
-        //snprintf_P(text, count-1, PSTR("%02d:%02d:%02d"), h, m, s);
-
-        text[count-1] = 0;
+	case VALUE_TYPE_COUNTDOWN:
+		printTime(uint32_, text, count);
         break;
-    }
 
     case VALUE_TYPE_SCPI_ERROR_TEXT:
         strncpy(text, SCPI_ErrorTranslate(int16_), count - 1);
@@ -511,6 +519,21 @@ void Value::toText(char *text, int count) const {
         text[count - 1] = 0;
         break;
 
+	case VALUE_TYPE_PERCENTAGE:
+		snprintf_P(text, count - 1, PSTR("%d%%"), int_);
+		text[count - 1] = 0;
+		break;
+
+	case VALUE_TYPE_SIZE:
+		snprintf_P(text, count - 1, PSTR("%ld"), uint32_);
+		text[count - 1] = 0;
+		break;
+
+	case VALUE_TYPE_DLOG_STATUS:
+		strcpy(text, PSTR("Dlog: "));
+		printTime(uint32_, text + 6, count - 6);
+		break;
+
     default:
         if (type_ > VALUE_TYPE_GREATER_THEN_MAX_FLOAT) {
             char valueText[64];
@@ -549,7 +572,7 @@ bool Value::operator ==(const Value &other) const {
         return true;
     }
 		
-	if (type_ == VALUE_TYPE_INT || type_ == VALUE_TYPE_CHANNEL_BOARD_INFO_LABEL || type_ == VALUE_TYPE_LESS_THEN_MIN_INT || type_ == VALUE_TYPE_GREATER_THEN_MAX_INT || type_ == VALUE_TYPE_USER_PROFILE_LABEL || type_ == VALUE_TYPE_USER_PROFILE_REMARK || type_ == VALUE_TYPE_EDIT_INFO || type_ == VALUE_TYPE_SERIAL_BAUD_INDEX) {
+	if (type_ == VALUE_TYPE_INT || type_ == VALUE_TYPE_CHANNEL_BOARD_INFO_LABEL || type_ == VALUE_TYPE_LESS_THEN_MIN_INT || type_ == VALUE_TYPE_GREATER_THEN_MAX_INT || type_ == VALUE_TYPE_USER_PROFILE_LABEL || type_ == VALUE_TYPE_USER_PROFILE_REMARK || type_ == VALUE_TYPE_EDIT_INFO || type_ == VALUE_TYPE_SERIAL_BAUD_INDEX || type_ == VALUE_TYPE_PERCENTAGE) {
         return int_ == other.int_;
     }
 
@@ -565,7 +588,7 @@ bool Value::operator ==(const Value &other) const {
 		return uint16_ == other.uint16_;
 	}
 
-	if (type_ == VALUE_TYPE_ON_TIME_COUNTER || type_ == VALUE_TYPE_COUNTDOWN || type_ == VALUE_TYPE_IP_ADDRESS || type_ == VALUE_TYPE_DATE || type_ == VALUE_TYPE_TIME) {
+	if (type_ == VALUE_TYPE_ON_TIME_COUNTER || type_ == VALUE_TYPE_COUNTDOWN || type_ == VALUE_TYPE_IP_ADDRESS || type_ == VALUE_TYPE_DATE || type_ == VALUE_TYPE_TIME || type_ == VALUE_TYPE_DLOG_STATUS || type_ == VALUE_TYPE_SIZE) {
 		return uint32_ == other.uint32_;
 	}
 
@@ -912,11 +935,23 @@ Value get(const Cursor &cursor, uint8_t id) {
             }
 
             if (id == DATA_ID_TRIGGER_IS_INITIATED) {
-                return Value(trigger::isInitiated() ? 1 : 0);
+				bool isInitiated = trigger::isInitiated();
+#if OPTION_SD_CARD
+				if (!isInitiated && dlog::isInitiated()) {
+					isInitiated = true;
+				}
+#endif
+                return Value(isInitiated ? 1 : 0);
             }
         
             if (id == DATA_ID_TRIGGER_IS_MANUAL) {
-                return Value(trigger::getSource() == trigger::SOURCE_MANUAL ? 1 : 0);
+				bool isManual = trigger::getSource() == trigger::SOURCE_MANUAL;
+#if OPTION_SD_CARD
+				if (!isManual && dlog::g_triggerSource == trigger::SOURCE_MANUAL) {
+					isManual = true;
+				}
+#endif
+                return Value(isManual ? 1 : 0);
             }
 
             if (id == DATA_ID_CHANNEL_MON_VALUE) {
@@ -928,7 +963,7 @@ Value get(const Cursor &cursor, uint8_t id) {
             }
         
             if (id == DATA_ID_CHANNEL_U_EDIT) {
-                if (g_focusCursor == cursor && g_focusDataId == DATA_ID_CHANNEL_U_EDIT && g_focusEditValue.getType() != VALUE_TYPE_NONE) {
+                if ((g_focusCursor == cursor || channel_dispatcher::isCoupled()) && g_focusDataId == DATA_ID_CHANNEL_U_EDIT && g_focusEditValue.getType() != VALUE_TYPE_NONE) {
                     return g_focusEditValue;
                 } else {
                     return Value(channel_dispatcher::getUSet(channel), VALUE_TYPE_FLOAT_VOLT, channel.index-1);
@@ -952,7 +987,7 @@ Value get(const Cursor &cursor, uint8_t id) {
             }
         
             if (id == DATA_ID_CHANNEL_I_EDIT) {
-                if (g_focusCursor == cursor && g_focusDataId == DATA_ID_CHANNEL_I_EDIT && g_focusEditValue.getType() != VALUE_TYPE_NONE) {
+                if ((g_focusCursor == cursor || channel_dispatcher::isCoupled()) && g_focusDataId == DATA_ID_CHANNEL_I_EDIT && g_focusEditValue.getType() != VALUE_TYPE_NONE) {
                     return g_focusEditValue;
                 } else {
                     return Value(channel_dispatcher::getISet(channel), VALUE_TYPE_FLOAT_AMPER, channel.index-1);
@@ -986,7 +1021,7 @@ Value get(const Cursor &cursor, uint8_t id) {
             if (id == DATA_ID_OVP) {
                 unsigned ovp;
                 if (!channel.prot_conf.flags.u_state) ovp = 0;
-                else if (!channel.ovp.flags.tripped) ovp = 1;
+                else if (!channel_dispatcher::isOvpTripped(channel)) ovp = 1;
                 else ovp = 2;
                 return Value(ovp);
             }
@@ -994,7 +1029,7 @@ Value get(const Cursor &cursor, uint8_t id) {
             if (id == DATA_ID_OCP) {
                 unsigned ocp;
                 if (!channel.prot_conf.flags.i_state) ocp = 0;
-                else if (!channel.ocp.flags.tripped) ocp = 1;
+                else if (!channel_dispatcher::isOcpTripped(channel)) ocp = 1;
                 else ocp = 2;
                 return Value(ocp);
             }
@@ -1002,7 +1037,7 @@ Value get(const Cursor &cursor, uint8_t id) {
             if (id == DATA_ID_OPP) {
                 unsigned opp;
                 if (!channel.prot_conf.flags.p_state) opp = 0;
-                else if (!channel.opp.flags.tripped) opp = 1;
+                else if (!channel_dispatcher::isOppTripped(channel)) opp = 1;
                 else opp = 2;
                 return Value(opp);
             }
@@ -1013,7 +1048,7 @@ Value get(const Cursor &cursor, uint8_t id) {
 #elif EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4 || EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R5B12
                 temperature::TempSensorTemperature &tempSensor = temperature::sensors[temp_sensor::CH1 + channel.index - 1];
                 if (!tempSensor.isInstalled() || !tempSensor.isTestOK() || !tempSensor.prot_conf.state) return 0;
-                else if (!tempSensor.isTripped()) return 1;
+                else if (!channel_dispatcher::isOtpTripped(channel)) return 1;
                 else return 2;
 #endif
             }
@@ -1062,12 +1097,8 @@ Value get(const Cursor &cursor, uint8_t id) {
             if (id == DATA_ID_CHANNEL_LIST_COUNTDOWN) {
                 int32_t remaining;
                 uint32_t total;
-                if (list::getCurrentDwellTime(channel, remaining, total) && total >= 5) {
-                    if (remaining > 0) {
-                        return Value((uint32_t)remaining, VALUE_TYPE_COUNTDOWN);
-                    } else {
-                        return Value((uint32_t)0, VALUE_TYPE_COUNTDOWN);
-                    }
+                if (list::getCurrentDwellTime(channel, remaining, total) && total >= CONF_LIST_COUNDOWN_DISPLAY_THRESHOLD) {
+                    return Value((uint32_t)remaining, VALUE_TYPE_COUNTDOWN);
                 } else {
                     return Value();
                 }
@@ -1180,6 +1211,50 @@ Value get(const Cursor &cursor, uint8_t id) {
         return data::Value(throbber[(millis() % 1000) / 125]);
     }
 
+    if (id == DATA_ID_PROGRESS) {
+        return g_progress;
+    }
+
+    if (id == DATA_ID_IO_PINS_INHIBIT_STATE) {
+        persist_conf::IOPin &inputPin = persist_conf::devConf2.ioPins[0];
+        if (inputPin.function == io_pins::FUNCTION_INHIBIT) {
+            return data::Value(io_pins::isInhibited() ? 1 : 0);
+        } else {
+            return data::Value(2);
+        }
+    }
+
+	if (id == DATA_ID_VIEW_STATUS) {
+#if OPTION_SD_CARD
+		bool listStatusVisible = list::anyCounterVisible(CONF_LIST_COUNDOWN_DISPLAY_THRESHOLD);
+		bool dlogStatusVisible = !dlog::isIdle();
+		if (listStatusVisible && dlogStatusVisible) {
+			return data::Value(micros() % (2 * 1000000UL) < 1000000UL ? 1 : 2);
+		}
+		else if (listStatusVisible) {
+			return data::Value(1);
+		}
+		else if (dlogStatusVisible) {
+			return data::Value(2);
+		}
+#else
+		if (list::anyCounterVisible(CONF_LIST_COUNDOWN_DISPLAY_THRESHOLD)) {
+			return data::Value(1);
+		}
+#endif
+		return data::Value(0);
+	}
+
+#if OPTION_SD_CARD
+	if (id == DATA_ID_DLOG_STATUS) {
+		if (dlog::isInitiated()) {
+			return data::Value(PSTR("Dlog trigger waiting"));
+		} else if (!dlog::isIdle()) {
+			return data::Value((uint32_t)floor(dlog::g_currentTime), VALUE_TYPE_DLOG_STATUS);
+		}
+	}
+#endif
+
     Page *page = getActivePage();
     if (page) {
         Value value = page->getData(cursor, id);
@@ -1233,7 +1308,7 @@ bool set(const Cursor &cursor, uint8_t id, Value value, int16_t *error) {
             return false;
         }
         
-        if (util::greater(value.getFloat() * channel_dispatcher::getISet(Channel::get(iChannel)), channel_dispatcher::getPowerLimit(Channel::get(iChannel)), VALUE_TYPE_FLOAT_WATT, iChannel)) {
+        if (util::greater(value.getFloat() * channel_dispatcher::getISetUnbalanced(Channel::get(iChannel)), channel_dispatcher::getPowerLimit(Channel::get(iChannel)), VALUE_TYPE_FLOAT_WATT, iChannel)) {
             if (error) *error = SCPI_ERROR_POWER_LIMIT_EXCEEDED;
             return false;
         }
@@ -1252,7 +1327,7 @@ bool set(const Cursor &cursor, uint8_t id, Value value, int16_t *error) {
             return false;
         }
         
-        if (util::greater(value.getFloat() * channel_dispatcher::getUSet(Channel::get(iChannel)), channel_dispatcher::getPowerLimit(Channel::get(iChannel)), VALUE_TYPE_FLOAT_VOLT, iChannel)) {
+        if (util::greater(value.getFloat() * channel_dispatcher::getUSetUnbalanced(Channel::get(iChannel)), channel_dispatcher::getPowerLimit(Channel::get(iChannel)), VALUE_TYPE_FLOAT_VOLT, iChannel)) {
             if (error) *error = SCPI_ERROR_POWER_LIMIT_EXCEEDED;
             return false;
         }
@@ -1318,8 +1393,13 @@ bool isBlinking(const Cursor &cursor, uint8_t id) {
         return trigger::isInitiated();
     }
 
-    if (g_focusCursor == cursor && g_focusDataId == id && g_focusEditValue.getType() != VALUE_TYPE_NONE) {
+    if ((g_focusCursor == cursor || channel_dispatcher::isCoupled()) && g_focusDataId == id && g_focusEditValue.getType() != VALUE_TYPE_NONE) {
         return true;
+    }
+
+    if (id == DATA_ID_IO_PINS_INHIBIT_STATE) {
+        persist_conf::IOPin &inputPin = persist_conf::devConf2.ioPins[0];
+        return inputPin.function == io_pins::FUNCTION_INHIBIT && io_pins::isInhibited();
     }
 
     return false;
@@ -1341,9 +1421,30 @@ Value getEditValue(const Cursor &cursor, uint8_t id) {
     return get(cursor, id);
 }
 
+uint16_t getWidgetBackgroundColor(const WidgetCursor& widgetCursor, const Style* style) {
+#if OPTION_SD_CARD
+	DECL_WIDGET(widget, widgetCursor.widgetOffset);
+	int iChannel = widgetCursor.cursor.i >= 0 ? widgetCursor.cursor.i : (g_channel ? (g_channel->index - 1) : 0);
+	if (widget->data == DATA_ID_CHANNEL_U_EDIT || widget->data == DATA_ID_CHANNEL_U_MON_DAC) {
+		if (dlog::g_logVoltage[iChannel]) {
+			return CONF_DLOG_COLOR;
+		}
+	} else if (widget->data == DATA_ID_CHANNEL_I_EDIT) {
+		if (dlog::g_logCurrent[iChannel]) {
+			return CONF_DLOG_COLOR;
+		}
+	} else if (widget->data == DATA_ID_CHANNEL_P_MON) {
+		if (dlog::g_logPower[iChannel]) {
+			return CONF_DLOG_COLOR;
+		}
+	}
+#endif
+	return style->background_color;
+}
+
 }
 }
 }
 } // namespace eez::psu::ui::data
 
-#endif
+#endif // OPTION_DISPLAY

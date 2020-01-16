@@ -33,6 +33,7 @@ namespace gui {
 #define STYLE_FLAGS_VERT_ALIGN_TOP 0
 #define STYLE_FLAGS_VERT_ALIGN_BOTTOM 8
 #define STYLE_FLAGS_VERT_ALIGN_CENTER 16
+#define STYLE_FLAGS_BLINK 32
 
 #define WIDGET_TYPE_NONE 0
 #define WIDGET_TYPE_CONTAINER 1
@@ -118,6 +119,7 @@ struct WidgetState {
     uint16_t size;
     WidgetStateFlags flags;
     data::Value data;
+	uint16_t backgroundColor;
 };
 
 struct ContainerWidget {

@@ -54,21 +54,19 @@ const Value CONF_GUI_I_STEPS[] = {
     Value(0.01f, VALUE_TYPE_FLOAT)
 };
 
-static int step_index = 2;
+static int g_stepIndex[CH_NUM][2];
 
-static bool changed;
-static int start_pos;
+static const int DEFAULT_INDEX = 3;
+
+static bool g_changed;
+static int g_startPos;
 
 float getStepValue() {
     if (edit_mode::getUnit() == VALUE_TYPE_FLOAT_VOLT) {
-        return CONF_GUI_U_STEPS[step_index].getFloat();
+        return CONF_GUI_U_STEPS[getStepIndex()].getFloat();
     } else {
-        return CONF_GUI_I_STEPS[step_index].getFloat();
+        return CONF_GUI_I_STEPS[getStepIndex()].getFloat();
     }
-}
-
-int getStepIndex() {
-    return step_index;
 }
 
 void getStepValues(const data::Value **labels, int &count) {
@@ -81,8 +79,29 @@ void getStepValues(const data::Value **labels, int &count) {
     }
 }
 
+int getStepIndex() {
+	int value;
+	if (edit_mode::getUnit() == VALUE_TYPE_FLOAT_VOLT) {
+		value = g_stepIndex[g_focusCursor.i][0];
+	}
+	else {
+		value = g_stepIndex[g_focusCursor.i][1];
+	}
+
+	if (value == 0) {
+		value = DEFAULT_INDEX;
+	}
+
+	return value - 1;
+}
+
 void setStepIndex(int value) {
-    step_index = value;
+	if (edit_mode::getUnit() == VALUE_TYPE_FLOAT_VOLT) {
+		g_stepIndex[g_focusCursor.i][0] = value + 1;
+	}
+	else {
+		g_stepIndex[g_focusCursor.i][1] = value + 1;
+	}
 }
 
 void increment(int counter, bool playClick) {
@@ -115,7 +134,7 @@ void increment(int counter, bool playClick) {
     }
 
     if (edit_mode::setValue(value)) {
-	    changed = true;
+	    g_changed = true;
         if (playClick) {
             sound::playClick();
         }
@@ -132,11 +151,11 @@ void onEncoder(int counter) {
 #endif
 
 void test() {
-    if (!changed) {
+    if (!g_changed) {
 #if DISPLAY_ORIENTATION == DISPLAY_ORIENTATION_PORTRAIT
         int d = start_pos - touch::y;
 #else
-        int d = touch::x - start_pos;
+        int d = touch::x - g_startPos;
 #endif
         if (abs(d) >= CONF_GUI_EDIT_MODE_STEP_THRESHOLD_PX) {
             increment(d > 0 ? 1 : -1, true);
@@ -148,9 +167,9 @@ void onTouchDown() {
 #if DISPLAY_ORIENTATION == DISPLAY_ORIENTATION_PORTRAIT
     start_pos = touch::y;
 #else
-	start_pos = touch::x;
+	g_startPos = touch::x;
 #endif
-    changed = false;
+    g_changed = false;
 }
 
 void onTouchMove() {

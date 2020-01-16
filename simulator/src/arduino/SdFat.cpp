@@ -17,8 +17,10 @@
  */
 
 #include "psu.h"
-#include "SD.h"
+#include "SdFat.h"
 #include "util.h"
+
+#include <time.h>
 
 #ifdef _WIN32
 
@@ -27,14 +29,16 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
-
 #include <direct.h>
+#include <io.h>
 
 #else
 
 #include <dirent.h>
 #include <sys/stat.h> // mkdir
 #include <errno.h>
+#include <unistd.h>
+#include <sys/statvfs.h>
 
 #endif
 
@@ -47,8 +51,6 @@ namespace psu {
 namespace simulator {
 namespace arduino {
 
-SimulatorSD SD;
-
 ////////////////////////////////////////////////////////////////////////////////
 
 std::string getRealPath(const char *path) {
@@ -56,11 +58,13 @@ std::string getRealPath(const char *path) {
     
     realPath = "sd_card";
 
-    if (path[0] != '/') {
-        realPath += "/";
-    }
+    if (path[0]) {
+        if (path[0] != '/') {
+            realPath += "/";
+        }
 
-    realPath += path;
+        realPath += path;
+    }
 
     // remove trailing slash
     if (realPath[realPath.size() - 1] == '/') {
@@ -81,7 +85,7 @@ bool pathExists(const char *path) {
 
 class FileImpl {
     friend class File;
-    friend class SimulatorSD;
+    friend class SdFat;
 
 public:
     FileImpl();
@@ -89,19 +93,26 @@ public:
     ~FileImpl();
 
     operator bool();
-    const char *name();
+    bool getName(char *name, size_t size);
     uint32_t size();
     bool isDirectory();
 
     void close();
 
+    bool dirEntry(dir_t* dir);
+
     void rewindDirectory();
     File openNextFile(uint8_t mode = READ_ONLY);
+
+    bool truncate(uint32_t length);
 
     bool available();
     bool seek(uint32_t pos);
     int peek();
     int read();
+    int read(void *buf, uint16_t nbyte);
+    size_t write(const uint8_t *buf, size_t size);
+	void sync();
 
     void print(float value, int numDecimalDigits);
     void print(char value);
@@ -151,9 +162,9 @@ void FileImpl::init() {
 
 void FileImpl::open() {
     if (m_mode == FILE_WRITE) {
-        m_fp = fopen(getRealPath().c_str(), "w");
+        m_fp = fopen(getRealPath().c_str(), "ab");
     } else {
-        m_fp = fopen(getRealPath().c_str(), "r");
+        m_fp = fopen(getRealPath().c_str(), "rb");
     }
 }
 
@@ -177,16 +188,21 @@ std::string FileImpl::getRealPath() {
 }
 
 FileImpl::operator bool() {
-    if (m_fp) return true;
+    if (m_fp) {
+        return true;
+    }
 
     if (m_path.length() == 0) {
         return false;
     }
+
     return pathExists(m_path.c_str());
 }
 
-const char *FileImpl::name() {
-    return strrchr(m_path.c_str(), '/');
+bool FileImpl::getName(char *name, size_t size) {
+    strncpy(name, strrchr(m_path.c_str(), '/'), size);
+    name[size] = 0;
+    return true;
 }
 
 uint32_t FileImpl::size() {
@@ -230,6 +246,48 @@ void FileImpl::close() {
     }
 #endif
     m_path = "";
+}
+
+bool FileImpl::dirEntry(dir_t* dir) {
+    time_t mtime;
+
+#ifdef _WIN32
+    HANDLE hFile = CreateFileA(getRealPath().c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    if (hFile == INVALID_HANDLE_VALUE) {
+        return false;
+    }
+
+    FILETIME lastWriteTime;
+    BOOL result = GetFileTime(hFile, NULL, NULL, &lastWriteTime);
+
+    CloseHandle(hFile);
+
+    if (!result) {
+        return false;
+    }
+
+    ULARGE_INTEGER ull;
+
+    ull.LowPart = lastWriteTime.dwLowDateTime;
+    ull.HighPart = lastWriteTime.dwHighDateTime;
+
+    mtime = ull.QuadPart / 10000000ULL - 11644473600ULL;
+#else
+    struct stat st = {0};
+    int ret = lstat(getRealPath().c_str(), &st);
+    if (ret == -1) {
+        return false;
+    }
+    
+    mtime = st.st_mtime;
+#endif
+
+    struct tm *tmmtime = gmtime(&mtime);
+
+    dir->lastWriteDate = FAT_DATE(tmmtime->tm_year + 1900, tmmtime->tm_mon + 1, tmmtime->tm_mday);
+    dir->lastWriteTime = FAT_TIME(tmmtime->tm_hour, tmmtime->tm_min, tmmtime->tm_sec);
+
+    return true;
 }
 
 void FileImpl::rewindDirectory() {
@@ -289,6 +347,14 @@ bool FileImpl::seek(uint32_t pos) {
     return fseek(m_fp, pos, SEEK_SET) == 0;
 }
 
+bool FileImpl::truncate(uint32_t length) {
+#ifdef _WIN32
+    return _chsize(_fileno(m_fp), length) == 0;
+#else
+    return ftruncate(fileno(m_fp), length) == 0;
+#endif
+}
+
 bool FileImpl::available() {
     return peek() != EOF;
 }
@@ -308,6 +374,19 @@ int FileImpl::peek() {
 int FileImpl::read() {
     return getc(m_fp);
 }
+
+int FileImpl::read(void *buf, uint16_t nbyte) {
+    return fread(buf, 1, nbyte, m_fp);
+}
+
+size_t FileImpl::write(const uint8_t *buf, size_t size) {
+    return fwrite(buf, 1, size, m_fp);
+}
+
+void FileImpl::sync() {
+	fflush(m_fp);
+}
+
 
 void FileImpl::print(float value, int numDecimalDigits) {
     fprintf(m_fp, "%.*f", numDecimalDigits, value);
@@ -344,16 +423,24 @@ File &File::operator =(const File &file) {
 File::~File() {
     m_impl->unref();
 }
+
 void File::close() {
     return m_impl->close();
+}
+
+void File::dateTimeCallback(void (*dateTime)(uint16_t* date, uint16_t* time)) {
+}
+
+bool File::dirEntry(dir_t* dir) {
+    return m_impl->dirEntry(dir);
 }
 
 File::operator bool() {
     return m_impl->operator bool();
 }
 
-const char *File::name() {
-    return m_impl->name();
+bool File::getName(char *name, size_t size) {
+    return m_impl->getName(name, size);
 }
 
 uint32_t File::size() {
@@ -372,6 +459,10 @@ File File::openNextFile(uint8_t mode) {
     return m_impl->openNextFile(mode);
 }
 
+bool File::truncate(uint32_t length) {
+    return m_impl->truncate(length);
+}
+
 bool File::available() {
     return m_impl->available();
 }
@@ -388,6 +479,18 @@ int File::read() {
     return m_impl->read();
 }
 
+int File::read(void *buf, uint16_t nbyte) {
+    return m_impl->read(buf, nbyte);
+}
+
+size_t File::write(const uint8_t *buf, size_t size) {
+    return m_impl->write(buf, size);
+}
+
+void File::sync() {
+	return m_impl->sync();
+}
+
 void File::print(float value, int numDecimalDigits) {
     m_impl->print(value, numDecimalDigits);
 }
@@ -398,7 +501,7 @@ void File::print(char value) {
 
 ////////////////////////////////////////////////////////////////////////////////
 
-bool SimulatorSD::begin(uint8_t cs) {
+bool SdFat::begin(uint8_t cs, SPISettings spiSettings) {
 #ifdef EEZ_PSU_SIMULATOR
     // make sure SD card root path exists
     mkdir("/");
@@ -406,17 +509,28 @@ bool SimulatorSD::begin(uint8_t cs) {
     return File("/");
 }
 
-File SimulatorSD::open(const char *path, uint8_t mode) {
+File SdFat::open(const char *path, uint8_t mode) {
     File file(path, mode);
     file.m_impl->open();
     return file;
 }
 
-bool SimulatorSD::exists(const char *path) {
+bool SdFat::exists(const char *path) {
     return pathExists(path);
 }
 
-bool SimulatorSD::mkdir(const char *path) {
+bool SdFat::rename(const char *sourcePath, const char *destinationPath) {
+    std::string realSourcePath = getRealPath(sourcePath);
+    std::string realDestinationPath = getRealPath(destinationPath);
+    return ::rename(realSourcePath.c_str(), realDestinationPath.c_str()) == 0;
+}
+
+bool SdFat::remove(const char *path) {
+    std::string realPath = getRealPath(path);
+    return ::remove(realPath.c_str()) == 0;
+}
+
+bool SdFat::mkdir(const char *path) {
     if (pathExists(path)) {
         return true;
     }
@@ -441,9 +555,30 @@ bool SimulatorSD::mkdir(const char *path) {
     return result == 0 || result == EEXIST;
 }
 
-bool SimulatorSD::remove(const char *path) {
+bool SdFat::rmdir(const char *path) {
     std::string realPath = getRealPath(path);
-    return ::remove(realPath.c_str()) == 0;
+#ifdef _WIN32
+    int result = ::_rmdir(realPath.c_str());
+#else
+    int result = ::rmdir(realPath.c_str());
+#endif
+    return result == 0;
+}
+
+bool SdFat::getInfo(uint64_t &usedSpace, uint64_t &freeSpace) {
+#ifdef _WIN32
+    DWORD sectorsPerCluster, bytesPerSector, numberOfFreeClusters, totalNumberOfClusters;
+    GetDiskFreeSpaceA(getRealPath("").c_str(), &sectorsPerCluster, &bytesPerSector, &numberOfFreeClusters, &totalNumberOfClusters);
+    usedSpace = uint64_t(bytesPerSector) * sectorsPerCluster * (totalNumberOfClusters - numberOfFreeClusters);
+    freeSpace = uint64_t(bytesPerSector) * sectorsPerCluster * numberOfFreeClusters;
+    return true;
+#else
+    struct statvfs buf;
+    statvfs(getRealPath("").c_str(), &buf);
+    usedSpace = uint64_t(buf.f_bsize) * (buf.f_blocks - buf.f_bfree);
+    freeSpace = uint64_t(buf.f_bsize) * buf.f_bfree;
+    return true;
+#endif
 }
 
 }

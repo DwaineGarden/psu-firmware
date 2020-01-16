@@ -20,6 +20,21 @@
 #include "datetime.h"
 #include "serial_psu.h"
 
+#ifndef EEZ_PSU_SIMULATOR
+#include <malloc.h>
+#include <stdlib.h>
+#include <stdio.h>
+
+extern char _end;
+extern "C" char *sbrk(int i);
+char *ramstart = (char *)0x20070000;
+char *ramend = (char *)0x20088000;
+#endif
+
+#if OPTION_SD_CARD
+#include "sd_card.h"
+#endif
+
 #if CONF_DEBUG
 
 #define AVG_LOOP_DURATION_N 100
@@ -78,7 +93,24 @@ void dumpVariables(char *buffer) {
         strcat(buffer, " = ");
         g_variables[i]->dump(buffer);
         strcat(buffer, "\n");
-    }
+	}
+
+#ifndef EEZ_PSU_SIMULATOR
+	psu::criticalTick(-1);
+
+	char *heapend = sbrk(0);
+	register char * stack_ptr asm("sp");
+	struct mallinfo mi = mallinfo();
+	sprintf(buffer + strlen(buffer), "Dynamic ram used: %d\n", mi.uordblks);
+	sprintf(buffer + strlen(buffer), "Program static ram used %d\n", &_end - ramstart);
+	sprintf(buffer + strlen(buffer), "Stack ram used %d\n", ramend - stack_ptr);
+	sprintf(buffer + strlen(buffer), "My guess at free mem: %d\n", stack_ptr - heapend + mi.fordblks);
+#endif 
+
+#if OPTION_SD_CARD
+	psu::criticalTick(-1);
+	sd_card::dumpInfo(buffer);
+#endif
 }
 
 }
@@ -110,7 +142,22 @@ void DumpTraceBuffer() {
             SERIAL_PORT.print(": ");
         }
 
-        SERIAL_PORT.println(traceBuffer);
+        size_t len = strlen(traceBuffer);
+        if (len > 64) {
+            // dump trace buffer using chunks of 64 bytes
+            const size_t CHUNK_SIZE = 64;
+            const char *end = traceBuffer + len;
+            const char *p = traceBuffer;
+            const char *q = traceBuffer + CHUNK_SIZE;
+            do {
+                SERIAL_PORT.write(p, CHUNK_SIZE);
+                p = q;
+                q += CHUNK_SIZE;
+            } while (q < end);
+            SERIAL_PORT.println(p);
+        } else {
+            SERIAL_PORT.println(traceBuffer);
+        }
 
         SERIAL_PORT.flush();
     }

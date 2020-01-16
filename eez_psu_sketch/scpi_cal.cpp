@@ -23,6 +23,10 @@
 #include "trigger.h"
 #include "channel_dispatcher.h"
 
+#if OPTION_DISPLAY
+#include "gui_internal.h"
+#endif
+
 namespace eez {
 namespace psu {
 namespace scpi {
@@ -45,23 +49,6 @@ scpi_choice_def_t calibration_current_range_choice[] = {
 };
 
 ////////////////////////////////////////////////////////////////////////////////
-
-static bool check_password(scpi_t * context) {
-    const char *password;
-    size_t len;
-
-    if (!SCPI_ParamCharacters(context, &password, &len, true)) {
-        return false;
-    }
-
-	size_t nPassword = strlen(persist_conf::devConf.calibration_password);
-    if (nPassword != len || strncmp(persist_conf::devConf.calibration_password, password, len) != 0) {
-        SCPI_ErrorPush(context, SCPI_ERROR_INVALID_CAL_PASSWORD);
-        return false;
-    }
-
-    return true;
-}
 
 static scpi_result_t calibration_level(scpi_t * context, calibration::Value &calibrationValue) {
     if (!calibration::isEnabled()) {
@@ -130,7 +117,7 @@ scpi_result_t scpi_cmd_calibrationClear(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    if (!check_password(context)) {
+    if (!checkPassword(context, persist_conf::devConf.calibration_password)) {
         return SCPI_RES_ERR;
     }
 
@@ -171,7 +158,7 @@ scpi_result_t scpi_cmd_calibrationMode(scpi_t * context) {
         return SCPI_RES_ERR;
     }
 
-    if (!check_password(context)) {
+    if (!checkPassword(context, persist_conf::devConf.calibration_password)) {
         return SCPI_RES_ERR;
     }
 
@@ -213,7 +200,7 @@ scpi_result_t scpi_cmd_calibrationCurrentRange(scpi_t * context) {
     }
 
     if (!calibration::hasSupportForCurrentDualRange()) {
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
     }
 
@@ -228,7 +215,7 @@ scpi_result_t scpi_cmd_calibrationCurrentRange(scpi_t * context) {
 }
 
 scpi_result_t scpi_cmd_calibrationPasswordNew(scpi_t * context) {
-    if (!check_password(context)) {
+    if (!checkPassword(context, persist_conf::devConf.calibration_password)) {
         return SCPI_RES_ERR;
     }
 
@@ -361,6 +348,16 @@ scpi_result_t scpi_cmd_calibrationVoltageData(scpi_t * context) {
 
 scpi_result_t scpi_cmd_calibrationVoltageLevel(scpi_t * context) {
     return calibration_level(context, calibration::getVoltage());;
+}
+
+scpi_result_t scpi_cmd_calibrationScreenInit(scpi_t * context) {
+#if OPTION_DISPLAY
+	gui::setPage(gui::PAGE_ID_SCREEN_CALIBRATION_INTRO);
+	return SCPI_RES_OK;
+#else
+	SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
+	return SCPI_RES_ERR;
+#endif
 }
 
 }

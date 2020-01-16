@@ -19,6 +19,7 @@
 #include "psu.h"
 #include "temperature.h"
 #include "scpi_psu.h"
+#include "pid.h"
 
 #if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R3B4 || EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R5B12
 
@@ -27,6 +28,8 @@
 namespace eez {
 namespace psu {
 namespace fan {
+
+////////////////////////////////////////////////////////////////////////////////
 
 enum RpmMeasureState {
     RPM_MEASURE_STATE_START,
@@ -42,17 +45,29 @@ TestResult g_testResult = psu::TEST_FAILED;
 
 static uint32_t g_testStartTime;
 
-static int g_fanSpeedPWM = 0;
+bool g_fanManualControl = false;
+int g_fanSpeedPWM = 0;
 static float g_fanSpeed = FAN_MIN_PWM;
 
 static uint32_t g_fanSpeedLastMeasuredTick = 0;
-static uint32_t g_fanSpeedLastAdjustedTick = 0;
+
+double g_Kp = FAN_PID_KP;
+double g_Ki = FAN_PID_KI;
+double g_Kd = FAN_PID_KD;
+int g_POn = FAN_PID_POn;
+
+static double g_pidTemp;
+static double g_pidDuty;
+static double g_pidTarget = FAN_MIN_TEMP;
+static PID g_fanPID(&g_pidTemp, &g_pidDuty, &g_pidTarget, FAN_PID_KP, FAN_PID_KI, FAN_PID_KD, FAN_PID_POn, REVERSE);
 
 volatile int g_rpm = 0;
 
 static int g_rpmMeasureInterruptNumber;
 static volatile RpmMeasureState g_rpmMeasureState = RPM_MEASURE_STATE_FINISHED;
 static uint32_t g_rpmMeasureT1;
+
+static const uint32_t FAN_RPM_MEASURE_TIME = 100000L / FAN_NOMINAL_RPM;
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -120,6 +135,10 @@ void finish_rpm_measure() {
 ////////////////////////////////////////////////////////////////////////////////
 
 void init() {
+	g_fanPID.SetSampleTime(FAN_SPEED_ADJUSTMENT_INTERVAL);
+	g_fanPID.SetOutputLimits(0, 255);
+	g_fanPID.SetMode(AUTOMATIC);
+
     g_rpmMeasureInterruptNumber = digitalPinToInterrupt(FAN_SENSE);
     SPI_usingInterrupt(g_rpmMeasureInterruptNumber);
     //attachInterrupt(g_rpmMeasureInterruptNumber, rpm_measure_interrupt_handler, CHANGE);
@@ -150,7 +169,7 @@ bool test() {
         g_fanSpeedPWM = saved_fan_speed_pwm;
 #endif
 
-        for (int i = 0; i < 25 && g_rpmMeasureState != RPM_MEASURE_STATE_MEASURED; ++i) {
+        for (int i = 0; i < FAN_RPM_MEASURE_TIME && g_rpmMeasureState != RPM_MEASURE_STATE_MEASURED; ++i) {
             delay(1);
         }
 
@@ -185,51 +204,45 @@ void tick(uint32_t tick_usec) {
         return;
     }
 
-    // adjust fan speed depending on max. channel temperature
-    if (tick_usec - g_fanSpeedLastAdjustedTick >= FAN_SPEED_ADJUSTMENT_INTERVAL * 1000L) {
-        float max_channel_temperature = temperature::getMaxChannelTemperature();
-        //DebugTraceF("max_channel_temperature: %f", max_channel_temperature);
+	if (!g_fanManualControl) {
+		if (g_rpmMeasureState == RPM_MEASURE_STATE_FINISHED) {
+			// adjust fan speed depending on max. channel temperature
+			float max_channel_temperature = temperature::getMaxChannelTemperature();
+			//DebugTraceF("max_channel_temperature: %f", max_channel_temperature);
+			g_pidTemp = max_channel_temperature;
+			if (g_fanPID.Compute()) {
+				g_fanSpeed = g_pidDuty >= FAN_MIN_PWM ? (float)g_pidDuty : 0;
 
-        float fanSpeedNew = util::remap(max_channel_temperature, FAN_MIN_TEMP, FAN_MIN_PWM, FAN_MAX_TEMP, FAN_MAX_PWM);
-        if (fanSpeedNew >= FAN_MIN_PWM) {
-            if (g_fanSpeed == 0) {
-                g_fanSpeed = FAN_MIN_PWM;
-            } 
-            g_fanSpeed = g_fanSpeed + 0.1f * (fanSpeedNew - g_fanSpeed);
-        } else {
-            g_fanSpeed = 0;
-        }
+				int newFanSpeedPWM = (int)g_fanSpeed;
+				if (newFanSpeedPWM < FAN_MIN_PWM) {
+					newFanSpeedPWM = 0;
+				}
+				else if (newFanSpeedPWM > FAN_MAX_PWM) {
+					newFanSpeedPWM = FAN_MAX_PWM;
+				}
 
-        int newFanSpeedPWM = (int)g_fanSpeed;
-        if (newFanSpeedPWM < FAN_MIN_PWM) {
-            newFanSpeedPWM = 0;
-        } else if (newFanSpeedPWM > FAN_MAX_PWM) {
-            newFanSpeedPWM = FAN_MAX_PWM;
-        }
+				if (newFanSpeedPWM != g_fanSpeedPWM) {
+					g_fanSpeedPWM = newFanSpeedPWM;
 
-        if (newFanSpeedPWM != g_fanSpeedPWM) {
-            g_fanSpeedPWM = newFanSpeedPWM;
+					if (g_fanSpeedPWM > 0) {
+						//DebugTraceF("fanSpeed PWM: %d", g_fanSpeedPWM);
+						g_fanSpeedLastMeasuredTick = tick_usec - FAN_SPEED_MEASURMENT_INTERVAL * 1000L;
+					}
+					else {
+						//DebugTrace("fanSpeed OFF");
+					}
 
-            if (g_fanSpeedPWM > 0) {
-                //DebugTraceF("fanSpeed PWM: %d", g_fanSpeedPWM);
-    
-                g_fanSpeedLastMeasuredTick = tick_usec;
-            } else {
-                //DebugTrace("fanSpeed OFF");
-            }
-
-            if (g_rpmMeasureState == RPM_MEASURE_STATE_FINISHED) {
-                analogWrite(FAN_PWM, g_fanSpeedPWM);
-            }
-        }
-
-        g_fanSpeedLastAdjustedTick = tick_usec;
-    }
+					analogWrite(FAN_PWM, g_fanSpeedPWM);
+				}
+			}
+		}
+	}
 
     // measure fan speed
 #if FAN_OPTION_RPM_MEASUREMENT
     if (g_fanSpeedPWM != 0) {
-        if (tick_usec - g_fanSpeedLastMeasuredTick >= FAN_SPEED_MEASURMENT_INTERVAL * 1000L) {
+		int32_t diff = tick_usec - g_fanSpeedLastMeasuredTick;
+        if (diff >= FAN_SPEED_MEASURMENT_INTERVAL * 1000L) {
             g_fanSpeedLastMeasuredTick = tick_usec;
             start_rpm_measure();
         } else {
@@ -238,13 +251,13 @@ void tick(uint32_t tick_usec) {
                 finish_rpm_measure();
                 //DebugTraceF("RPM=%d", g_rpm);
             } else if (rpmMeasureState != RPM_MEASURE_STATE_FINISHED) {
-                if (tick_usec - g_fanSpeedLastMeasuredTick >= 50 * 1000L) {
+				if (tick_usec - g_fanSpeedLastMeasuredTick >= 2 * FAN_RPM_MEASURE_TIME * 1000L) {
                     // measure timeout, interrupt measurement
                     g_rpmMeasureState = RPM_MEASURE_STATE_MEASURED;
                     g_rpm = 0;
                     finish_rpm_measure();
 
-                    if (g_fanSpeedPWM != 0) {
+                    if (g_fanSpeedPWM >= FAN_FAILED_THRESHOLD) {
                         g_testResult = psu::TEST_FAILED;
                         psu::generateError(SCPI_ERROR_FAN_TEST_FAILED);
                         psu::setQuesBits(QUES_FAN, true);
@@ -259,6 +272,15 @@ void tick(uint32_t tick_usec) {
 #else
     g_rpm = 0;
 #endif
+}
+
+void setPidTunings(double Kp, double Ki, double Kd, int POn) {
+	g_Kp = Kp;
+	g_Ki = Ki;
+	g_Kd = Kd;
+	g_POn = POn;
+
+	g_fanPID.SetTunings(g_Kp, g_Ki, g_Kd, g_POn);
 }
 
 }

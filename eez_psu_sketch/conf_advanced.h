@@ -26,10 +26,17 @@
 #define PSU_SERIAL   "0000000"
 
 /// Firmware version.
-#define FIRMWARE     "v1.01"
+#define FIRMWARE     "v1.1.2"
 
-/// Manufacturer description text.
-#define MANUFACTURER "EEZ"
+/// Manufacturer description text used for *IDN?
+#define IDN_MANUFACTURER "Envox"
+
+/// Model description text used for *IDN?
+#ifdef EEZ_PSU_SIMULATOR
+#define IDN_MODEL "EEZ H24005 (Simulator)"
+#else
+#define IDN_MODEL "EEZ H24005 (Due)"
+#endif
 
 /// SCPI TCP server port.
 #define TCP_PORT 5025
@@ -173,7 +180,7 @@
 #define TEMP_SENSOR_MIN_VALID_TEMPERATURE -5
 
 /// Interval at which fan speed should be adjusted
-#define FAN_SPEED_ADJUSTMENT_INTERVAL 10000
+#define FAN_SPEED_ADJUSTMENT_INTERVAL 500
 
 /// Interval at which fan speed should be measured
 #define FAN_SPEED_MEASURMENT_INTERVAL 5000
@@ -185,10 +192,19 @@
 #define FAN_MAX_TEMP 75
 
 ///  PWM value for min. fan speed (12) 
-#define FAN_MIN_PWM 15
+#define FAN_MIN_PWM 1
 
 /// PWM value for max. fan speed (255)
 #define FAN_MAX_PWM 255
+
+/// FAN PID controller parameters
+#define FAN_PID_KP 0.1
+#define FAN_PID_KI 0.05
+#define FAN_PID_KD 0
+#define FAN_PID_POn 1 // PoM: 0, PoE: 1, see http://brettbeauregard.com/blog/2017/06/introducing-proportional-on-measurement/
+
+/// Min. PWM after which fan failed will be asserted if RPM is not measured
+#define FAN_FAILED_THRESHOLD 15
 
 /// Max. allowed output current (in ampers) if fan or temp. sensor is invalid.
 #define ERR_MAX_CURRENT 2.0f
@@ -263,12 +279,18 @@
 #define LISTS_DIR PATH_SEPARATOR "LISTS"
 #define PROFILES_DIR PATH_SEPARATOR "PROFILES"
 #define LIST_FILE_EXTENSION ".CSV"
-#define MAX_PATH_LENGTH 128
+#define MAX_PATH_LENGTH 255
 #define CSV_SEPARATOR ','
 #define LIST_CSV_FILE_NO_VALUE_CHAR '='
 
 /// Time in seconds of SCPI inactivity to declare SCPI to be idle.
-#define SCPI_IDLE_TIMEOUT 30
+#define SCPI_IDLE_TIMEOUT 60
+
+/// Time in seconds of GUI inactivity to declare GUI to be idle.
+#define GUI_IDLE_TIMEOUT 1
+
+/// Time in seconds of Encoder inactivity to declare Encoder to be idle.
+#define ENCODER_IDLE_TIMEOUT 60
 
 /// Changed but not confirmed value will be reset to current one
 /// after this timeout in seconds.
@@ -308,3 +330,12 @@
 
 /// Change to 0 if you want to use programming USB port
 #define CONF_SERIAL_USE_NATIVE_USB_PORT 1
+
+/// Change to 1 if you want to add jitter column in DLOG file
+#define CONF_DLOG_JITTER 0
+
+/// During data logging call file.sync every N seconds
+#define CONF_DLOG_SYNC_FILE_TIME 10 // 10 seconds
+
+/// Size of serial port output buffer
+#define CONF_SERIAL_BUFFER_SIZE 64

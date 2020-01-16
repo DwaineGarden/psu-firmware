@@ -31,6 +31,7 @@
 #if OPTION_DISPLAY
 #include "gui.h"
 #endif
+#include "io_pins.h"
 
 namespace eez {
 namespace psu {
@@ -111,7 +112,7 @@ scpi_result_t scpi_cmd_systemDate(scpi_t *context) {
         return SCPI_RES_ERR;
     }
 
-    if (!datetime::setDate((uint8_t)year, (uint8_t)month, (uint8_t)day)) {
+    if (!datetime::setDate((uint8_t)year, (uint8_t)month, (uint8_t)day, 2)) {
         SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
         return SCPI_RES_ERR;
     }
@@ -160,7 +161,7 @@ scpi_result_t scpi_cmd_systemTime(scpi_t *context) {
         return SCPI_RES_ERR;
     }
 
-    if (!datetime::setTime((uint8_t)hour, (uint8_t)minute, (uint8_t)second)) {
+    if (!datetime::setTime((uint8_t)hour, (uint8_t)minute, (uint8_t)second, 2)) {
         SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
         return SCPI_RES_ERR;
     }
@@ -689,25 +690,8 @@ scpi_result_t scpi_cmd_systemPonOutputDisableQ(scpi_t *context) {
     return SCPI_RES_OK;
 }
 
-static bool check_password(scpi_t *context) {
-    const char *password;
-    size_t len;
-
-    if (!SCPI_ParamCharacters(context, &password, &len, true)) {
-        return false;
-    }
-
-	size_t nPassword = strlen(persist_conf::devConf2.systemPassword);
-    if (nPassword != len || strncmp(persist_conf::devConf2.systemPassword, password, len) != 0) {
-        SCPI_ErrorPush(context, SCPI_ERROR_INVALID_SYS_PASSWORD);
-        return false;
-    }
-
-    return true;
-}
-
 scpi_result_t scpi_cmd_systemPasswordNew(scpi_t *context) {
-    if (!check_password(context)) {
+    if (!checkPassword(context, persist_conf::devConf2.systemPassword)) {
         return SCPI_RES_ERR;
     }
 
@@ -741,7 +725,7 @@ scpi_result_t scpi_cmd_systemPasswordFpanelReset(scpi_t *context) {
     return SCPI_RES_OK;
 }
 
-scpi_result_t scpi_cmd_systemPasswordCalibrateReset(scpi_t *context) {
+scpi_result_t scpi_cmd_systemPasswordCalibrationReset(scpi_t *context) {
     if (!persist_conf::changeCalibrationPassword(CALIBRATION_PASSWORD_DEFAULT, strlen(CALIBRATION_PASSWORD_DEFAULT))) {
         SCPI_ErrorPush(context, SCPI_ERROR_EXECUTION_ERROR);
         return SCPI_RES_ERR;
@@ -784,6 +768,11 @@ scpi_result_t scpi_cmd_systemCommunicateRlstate(scpi_t *context) {
 #endif
 
     return SCPI_RES_OK;
+}
+
+scpi_result_t scpi_cmd_systemCommunicateRlstateQ(scpi_t *context) {
+	resultChoiceName(context, rlStateChoice, g_rlState);
+	return SCPI_RES_OK;
 }
 
 scpi_result_t scpi_cmd_systemLocal(scpi_t *context) {
@@ -896,7 +885,7 @@ scpi_result_t scpi_cmd_systemCommunicateEnable(scpi_t *context) {
 #if OPTION_ETHERNET
         persist_conf::enableEthernet(enable);
 #else
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
 #endif
     } else if (commInterface == 3) {
@@ -918,7 +907,7 @@ scpi_result_t scpi_cmd_systemCommunicateEnableQ(scpi_t *context) {
 #if OPTION_ETHERNET
         SCPI_ResultBool(context, persist_conf::isEthernetEnabled());
 #else
-        SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+        SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
         return SCPI_RES_ERR;
 #endif
     } else if (commInterface == 3) {
@@ -944,7 +933,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetDhcp(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -959,7 +948,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetDhcpQ(scpi_t *context) {
     SCPI_ResultBool(context, persist_conf::isEthernetDhcpEnabled());
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -988,7 +977,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetAddress(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1009,7 +998,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetAddressQ(scpi_t *context) {
     SCPI_ResultText(context, ipAddressStr);
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1038,7 +1027,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetDns(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1059,7 +1048,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetDnsQ(scpi_t *context) {
     }
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1088,7 +1077,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetGateway(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1109,7 +1098,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetGatewayQ(scpi_t *context) {
     }
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1138,7 +1127,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetSmask(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1159,7 +1148,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetSmaskQ(scpi_t *context) {
     }
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1185,7 +1174,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetPort(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1200,7 +1189,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetPortQ(scpi_t *context) {
     SCPI_ResultInt(context, persist_conf::devConf2.ethernetScpiPort);
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1229,7 +1218,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetMac(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1241,7 +1230,7 @@ scpi_result_t scpi_cmd_systemCommunicateEthernetMacQ(scpi_t *context) {
     SCPI_ResultText(context, macAddressStr);
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1267,7 +1256,7 @@ scpi_result_t scpi_cmd_systemCommunicateNtp(scpi_t *context) {
 
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
 }
@@ -1277,9 +1266,222 @@ scpi_result_t scpi_cmd_systemCommunicateNtpQ(scpi_t *context) {
     SCPI_ResultText(context, persist_conf::devConf2.ntpServer);
     return SCPI_RES_OK;
 #else
-    SCPI_ErrorPush(context, SCPI_ERROR_OPTION_NOT_INSTALLED);
+    SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
     return SCPI_RES_ERR;
 #endif
+}
+
+scpi_result_t scpi_cmd_systemInhibitQ(scpi_t * context) {
+    SCPI_ResultBool(context, io_pins::isInhibited());
+    return SCPI_RES_OK;
+}
+
+scpi_result_t scpi_cmd_systemDigitalInputDataQ(scpi_t *context) {
+	int32_t pin;
+	if (!SCPI_ParamInt(context, &pin, TRUE)) {
+		return SCPI_RES_ERR;
+	}
+
+	if (pin != 1) {
+		SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
+		return SCPI_RES_ERR;
+	}
+
+	if (persist_conf::devConf2.ioPins[pin - 1].function != io_pins::FUNCTION_INPUT) {
+		SCPI_ErrorPush(context, SCPI_ERROR_DIGITAL_PIN_FUNCTION_MISMATCH);
+		return SCPI_RES_ERR;
+	}
+
+	bool state = digitalRead(EXT_TRIG) ? true : false;
+
+	if (persist_conf::devConf2.ioPins[pin - 1].polarity == io_pins::POLARITY_NEGATIVE) {
+		state = !state;
+	}
+
+	SCPI_ResultInt(context, state ? 1 : 0);
+
+	return SCPI_RES_OK;
+}
+
+scpi_result_t scpi_cmd_systemDigitalOutputData(scpi_t *context) {
+#if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R5B12
+	int32_t pin;
+	if (!SCPI_ParamInt(context, &pin, TRUE)) {
+		return SCPI_RES_ERR;
+	}
+
+	if (pin != 2 && pin != 3) {
+		SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
+		return SCPI_RES_ERR;
+	}
+
+	if (persist_conf::devConf2.ioPins[pin - 1].function != io_pins::FUNCTION_OUTPUT) {
+		SCPI_ErrorPush(context, SCPI_ERROR_DIGITAL_PIN_FUNCTION_MISMATCH);
+		return SCPI_RES_ERR;
+	}
+
+	bool state;
+	if (!SCPI_ParamBool(context, &state, TRUE)) {
+		return SCPI_RES_ERR;
+	}
+
+	io_pins::setDigitalOutputPinState(pin, state);
+
+	return SCPI_RES_OK;
+#else
+	SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
+
+	return SCPI_RES_ERR;
+#endif
+}
+
+scpi_result_t scpi_cmd_systemDigitalOutputDataQ(scpi_t *context) {
+#if EEZ_PSU_SELECTED_REVISION == EEZ_PSU_REVISION_R5B12
+	int32_t pin;
+	if (!SCPI_ParamInt(context, &pin, TRUE)) {
+		return SCPI_RES_ERR;
+	}
+
+	if (pin != 2 && pin != 3) {
+		SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
+		return SCPI_RES_ERR;
+	}
+
+	if (persist_conf::devConf2.ioPins[pin - 1].function != io_pins::FUNCTION_OUTPUT) {
+		SCPI_ErrorPush(context, SCPI_ERROR_DIGITAL_PIN_FUNCTION_MISMATCH);
+		return SCPI_RES_ERR;
+	}
+
+	SCPI_ResultBool(context, io_pins::getDigitalOutputPinState(pin));
+
+	return SCPI_RES_OK;
+#else
+	SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
+
+	return SCPI_RES_ERR;
+#endif
+}
+
+
+static scpi_choice_def_t functionChoice[] = {
+	{ "NONE", io_pins::FUNCTION_NONE },
+	{ "DINPut", io_pins::FUNCTION_INPUT },
+	{ "DOUTput", io_pins::FUNCTION_OUTPUT },
+	{ "FAULt", io_pins::FUNCTION_FAULT },
+	{ "INHibit", io_pins::FUNCTION_INHIBIT },
+	{ "ONCouple", io_pins::FUNCTION_ON_COUPLE },
+	{ "TINPut", io_pins::FUNCTION_TINPUT },
+	{ "TOUTput", io_pins::FUNCTION_TOUTPUT },
+	SCPI_CHOICE_LIST_END
+};
+
+scpi_result_t scpi_cmd_systemDigitalPinFunction(scpi_t *context) {
+	int32_t pin;
+	SCPI_CommandNumbers(context, &pin, 1, 1);
+	if (pin < 1 || pin > 3) {
+		SCPI_ErrorPush(context, SCPI_ERROR_HEADER_SUFFIX_OUTOFRANGE);
+		return SCPI_RES_ERR;
+	}
+#if EEZ_PSU_SELECTED_REVISION != EEZ_PSU_REVISION_R5B12
+	if (pin != 1) {
+		SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
+		return SCPI_RES_ERR;
+	}
+#endif
+
+	int32_t function;
+	if (!SCPI_ParamChoice(context, functionChoice, &function, true)) {
+		return SCPI_RES_ERR;
+	}
+
+	if (pin == 1) {
+		if (function != io_pins::FUNCTION_NONE && function != io_pins::FUNCTION_INPUT && function != io_pins::FUNCTION_INHIBIT && function != io_pins::FUNCTION_TINPUT) {
+			SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
+			return SCPI_RES_ERR;
+		}
+	}
+	else {
+		if (function != io_pins::FUNCTION_NONE && function != io_pins::FUNCTION_OUTPUT && function != io_pins::FUNCTION_FAULT && function != io_pins::FUNCTION_ON_COUPLE && function != io_pins::FUNCTION_TOUTPUT) {
+			SCPI_ErrorPush(context, SCPI_ERROR_ILLEGAL_PARAMETER_VALUE);
+			return SCPI_RES_ERR;
+		}
+	}
+
+	persist_conf::devConf2.ioPins[pin - 1].function = function;
+
+	io_pins::refresh();
+
+	return SCPI_RES_OK;
+}
+
+scpi_result_t scpi_cmd_systemDigitalPinFunctionQ(scpi_t *context) {
+	int32_t pin;
+	SCPI_CommandNumbers(context, &pin, 1, 1);
+	if (pin < 1 || pin > 3) {
+		SCPI_ErrorPush(context, SCPI_ERROR_HEADER_SUFFIX_OUTOFRANGE);
+		return SCPI_RES_ERR;
+	}
+#if EEZ_PSU_SELECTED_REVISION != EEZ_PSU_REVISION_R5B12
+	if (pin != 1) {
+		SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
+		return SCPI_RES_ERR;
+	}
+#endif
+
+	resultChoiceName(context, functionChoice, persist_conf::devConf2.ioPins[pin - 1].function);
+
+	return SCPI_RES_OK;
+}
+
+static scpi_choice_def_t polarityChoice[] = {
+	{ "POSitive", io_pins::POLARITY_POSITIVE },
+	{ "NEGative", io_pins::POLARITY_NEGATIVE },
+	SCPI_CHOICE_LIST_END
+};
+
+scpi_result_t scpi_cmd_systemDigitalPinPolarity(scpi_t *context) {
+	int32_t pin;
+	SCPI_CommandNumbers(context, &pin, 1, 1);
+	if (pin < 1 || pin > 3) {
+		SCPI_ErrorPush(context, SCPI_ERROR_HEADER_SUFFIX_OUTOFRANGE);
+		return SCPI_RES_ERR;
+	}
+#if EEZ_PSU_SELECTED_REVISION != EEZ_PSU_REVISION_R5B12
+	if (pin != 1) {
+		SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
+		return SCPI_RES_ERR;
+	}
+#endif
+
+	int32_t polarity;
+	if (!SCPI_ParamChoice(context, polarityChoice, &polarity, true)) {
+		return SCPI_RES_ERR;
+	}
+
+	persist_conf::devConf2.ioPins[pin - 1].polarity = polarity;
+
+	io_pins::refresh();
+
+	return SCPI_RES_OK;
+}
+
+scpi_result_t scpi_cmd_systemDigitalPinPolarityQ(scpi_t *context) {
+	int32_t pin;
+	SCPI_CommandNumbers(context, &pin, 1, 1);
+	if (pin < 1 || pin > 3) {
+		SCPI_ErrorPush(context, SCPI_ERROR_HEADER_SUFFIX_OUTOFRANGE);
+		return SCPI_RES_ERR;
+	}
+#if EEZ_PSU_SELECTED_REVISION != EEZ_PSU_REVISION_R5B12
+	if (pin != 1) {
+		SCPI_ErrorPush(context, SCPI_ERROR_HARDWARE_MISSING);
+		return SCPI_RES_ERR;
+	}
+#endif
+
+	resultChoiceName(context, polarityChoice, persist_conf::devConf2.ioPins[pin - 1].polarity);
+
+	return SCPI_RES_OK;
 }
 
 }

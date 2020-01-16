@@ -57,6 +57,8 @@
 #include "front_panel/control.h"
 #endif
 
+#include "idle.h"
+
 #define CONF_GUI_PAGE_NAVIGATION_STACK_SIZE 5
 
 #define CONF_GUI_STANDBY_PAGE_TIMEOUT 10000000L // 10s
@@ -69,9 +71,9 @@
 
 #define CONF_GUI_TOAST_DURATION_MS 2000L
 
-#define MAX_EVENTS 16
+#define CONF_GUI_ENTER_CALIBRATION_MODE_TIMEOUT 30000000L // 30s
 
-#define IDLE_TIMEOUT_MS 1000
+#define MAX_EVENTS 16
 
 namespace eez {
 namespace psu {
@@ -112,7 +114,6 @@ static void (*g_errorMessageAction)();
 static int g_errorMessageActionParam;
 
 static uint32_t g_showPageTime;
-static uint32_t g_timeOfLastActivity;
 static bool g_touchActionExecuted;
 static bool g_touchActionExecutedAtDown;
 
@@ -124,8 +125,6 @@ data::Cursor g_focusCursor;
 uint8_t g_focusDataId;
 data::Value g_focusEditValue;
 uint32_t g_focusEditValueChangedTime;
-
-static bool g_idle;
 
 static char g_textMessage[32 + 1];
 static uint8_t g_textMessageVersion;
@@ -214,7 +213,7 @@ bool isActivePageInternal() {
 ////////////////////////////////////////////////////////////////////////////////
 
 void executeAction(int actionId) {
-    actions[actionId]();
+	g_actionExecFunctions[actionId]();
     sound::playClick();
 }
 
@@ -266,7 +265,7 @@ void doShowPage(int index, Page *page = 0) {
     }
 
     g_showPageTime = micros();
-    g_timeOfLastActivity = millis();
+    idle::noteGuiActivity();
 
     // clear text message if active page is not PAGE_ID_TEXT_MESSAGE
     if (g_activePageId != PAGE_ID_TEXT_MESSAGE && g_textMessage[0]) {
@@ -632,6 +631,35 @@ void showAsyncOperationInProgress(const char *message, void (*checkStatus)()) {
     data::set(data::Cursor(), DATA_ID_ALERT_MESSAGE, data::Value(message), 0);
     g_checkAsyncOperationStatus = checkStatus;
     pushPage(PAGE_ID_ASYNC_OPERATION_IN_PROGRESS);
+}
+
+void hideAsyncOperationInProgress() {
+	popPage();
+}
+
+void showProgressPage(const char *message, void (*abortCallback)()) {
+	data::set(data::Cursor(), DATA_ID_ALERT_MESSAGE, data::Value(message), 0);
+    g_dialogCancelCallback = abortCallback;
+    pushPage(PAGE_ID_PROGRESS);
+}
+
+bool updateProgressPage(size_t processedSoFar, size_t totalSize) {
+    if (g_activePageId == PAGE_ID_PROGRESS) {
+		if (totalSize > 0) {
+			data::g_progress = data::Value((int)round((processedSoFar * 1.0f / totalSize) * 100.0f), VALUE_TYPE_PERCENTAGE);
+		}
+		else {
+			data::g_progress = data::Value((uint32_t)processedSoFar, VALUE_TYPE_SIZE);
+		}
+        return true;
+    }
+    return false;
+}
+
+void hideProgressPage() {
+    if (g_activePageId == PAGE_ID_PROGRESS) {
+        popPage();
+    }
 }
 
 void yesNoLater(const char *message PROGMEM, void (*yes_callback)(), void (*no_callback)(), void (*later_callback)() = 0) {
@@ -1032,7 +1060,12 @@ void onEncoder(uint32_t tickCount, int counter, bool clicked) {
         }
 
         if (isEncoderEnabledInActivePage()) {
-            data::Value value = data::getEditValue(g_focusCursor, g_focusDataId);
+            data::Value value;
+            if (persist_conf::devConf2.flags.encoderConfirmationMode && g_focusEditValue.getType() != VALUE_TYPE_NONE) {
+                value = g_focusEditValue;
+            } else {
+                value = data::getEditValue(g_focusCursor, g_focusDataId);
+            }
 
             float newValue = value.getFloat() + (value.getType() == VALUE_TYPE_FLOAT_AMPER ? 0.001f : 0.01f) * counter;
 
@@ -1047,7 +1080,7 @@ void onEncoder(uint32_t tickCount, int counter, bool clicked) {
             }
 
             if (persist_conf::devConf2.flags.encoderConfirmationMode) {
-                g_focusEditValue = data::Value(newValue, value.getType(), g_focusCursor.i);
+                g_focusEditValue = data::Value(newValue, value.getType(), g_focusCursor.i > 0 ? g_focusCursor.i : 0);
                 g_focusEditValueChangedTime = micros();
             } else {
                 int16_t error;
@@ -1064,6 +1097,11 @@ void onEncoder(uint32_t tickCount, int counter, bool clicked) {
 
 static WidgetCursor g_toggleOutputWidgetCursor;
 
+void channelReinitiateTrigger() {
+    trigger::abort();
+    channelInitiateTrigger();
+}
+
 void channelToggleOutput() {
     Channel& channel = Channel::get(g_foundWidgetAtDown.cursor.i >= 0 ? g_foundWidgetAtDown.cursor.i : 0);
     if (channel_dispatcher::isTripped(channel)) {
@@ -1075,12 +1113,28 @@ void channelToggleOutput() {
         if (channel.isOutputEnabled()) {
             if (triggerModeEnabled) {
                 trigger::abort();
+                for (int i = 0; i < CH_NUM; ++i) {
+					Channel& channel = Channel::get(i);
+					if (channel_dispatcher::getVoltageTriggerMode(channel) != TRIGGER_MODE_FIXED ||
+						channel_dispatcher::getCurrentTriggerMode(channel) != TRIGGER_MODE_FIXED) {
+						channel_dispatcher::outputEnable(Channel::get(i), false);
+					}
+                }
+            } else {
+                channel_dispatcher::outputEnable(channel, false);
             }
-            channel_dispatcher::outputEnable(channel, false);
         } else {
-            if (triggerModeEnabled && trigger::isIdle()) {
-                g_toggleOutputWidgetCursor = g_foundWidgetAtDown;
-                pushPage(PAGE_ID_CH_START_LIST);
+            if (triggerModeEnabled) {
+                if (trigger::isIdle()) {
+                    g_toggleOutputWidgetCursor = g_foundWidgetAtDown;
+                    pushPage(PAGE_ID_CH_START_LIST);
+                } else if (trigger::isInitiated()) {
+                    trigger::abort();
+                    g_toggleOutputWidgetCursor = g_foundWidgetAtDown;
+                    pushPage(PAGE_ID_CH_START_LIST);
+                } else {
+                    yesNoDialog(PAGE_ID_YES_NO, PSTR("Trigger is active. Re-initiate trigger?"), channelReinitiateTrigger, 0, 0);
+                }
             } else {
                 channel_dispatcher::outputEnable(channel, true);
             }
@@ -1091,7 +1145,10 @@ void channelToggleOutput() {
 void channelInitiateTrigger() {
     popPage();
     int err = trigger::initiate();
-    if (err != SCPI_RES_OK) {
+    if (err == SCPI_RES_OK) {
+        Channel& channel = Channel::get(g_toggleOutputWidgetCursor.cursor.i >= 0 ? g_toggleOutputWidgetCursor.cursor.i : 0);        
+        channel_dispatcher::outputEnable(channel, true);
+    } else {
         errorMessage(g_toggleOutputWidgetCursor.cursor, data::Value::ScpiErrorText(err));
     }
 }
@@ -1222,6 +1279,8 @@ void pushEvent(EventType type) {
     }
 }
 
+void processEvents();
+
 void touchHandling(uint32_t tick_usec) {
     if (touch::calibration::isCalibrating()) {
         touch::calibration::tick(tick_usec);
@@ -1233,7 +1292,7 @@ void touchHandling(uint32_t tick_usec) {
     }
 
     if (touch::event_type != touch::TOUCH_NONE) {
-        g_timeOfLastActivity = millis();
+        idle::noteGuiActivity();
 
         if (touch::event_type == touch::TOUCH_DOWN) {
             g_touchDownTime = tick_usec;
@@ -1252,6 +1311,13 @@ void touchHandling(uint32_t tick_usec) {
                 pushEvent(EVENT_TYPE_AUTO_REPEAT);
                 g_lastAutoRepeatEventTime = tick_usec;
             }
+
+			if (int32_t(tick_usec - g_touchDownTime) >= CONF_GUI_ENTER_CALIBRATION_MODE_TIMEOUT) {
+				if (!g_foundWidgetAtDown || !isAutoRepeatAction(getAction(g_foundWidgetAtDown))) {
+					g_touchActionExecuted = true;
+					setPage(PAGE_ID_SCREEN_CALIBRATION_INTRO);
+				}
+			}
         } else if (touch::event_type == touch::TOUCH_UP) {
             pushEvent(EVENT_TYPE_TOUCH_UP);
         }
@@ -1261,8 +1327,12 @@ void touchHandling(uint32_t tick_usec) {
 void processEvents() {
     for (int i = 0; i < g_numEvents; ++i) {
         if (g_activePageId == PAGE_ID_SCREEN_CALIBRATION_INTRO) {
-            if (g_events[i].type == EVENT_TYPE_TOUCH_UP) {
-                touch::calibration::enterCalibrationMode(PAGE_ID_SCREEN_CALIBRATION_YES_NO_CANCEL, getStartPageId());
+			if (g_events[i].type == EVENT_TYPE_TOUCH_DOWN) {
+				g_touchActionExecuted = false;
+			} else if (g_events[i].type == EVENT_TYPE_TOUCH_UP) {
+				if (!g_touchActionExecuted) {
+					touch::calibration::enterCalibrationMode(PAGE_ID_SCREEN_CALIBRATION_YES_NO_CANCEL, getStartPageId());
+				}
             }
         } else {
             if (g_events[i].type == EVENT_TYPE_TOUCH_DOWN) {
@@ -1378,10 +1448,6 @@ void processEvents() {
     g_numEvents = 0;
 }
 
-bool isIdle() {
-    return g_idle;
-}
-
 void tick(uint32_t tick_usec) {
     lcd::tick(tick_usec);
 
@@ -1458,7 +1524,7 @@ void tick(uint32_t tick_usec) {
         return;
     }
 
-    if (g_activePageId == PAGE_ID_MAIN && int32_t(tick_usec - g_showPageTime) >= 50000L) {
+    if (!isFrontPanelLocked() && g_activePageId == PAGE_ID_MAIN && int32_t(tick_usec - g_showPageTime) >= 50000L) {
         if (showSetupWizardQuestion()) {
             return;
         }
@@ -1467,17 +1533,15 @@ void tick(uint32_t tick_usec) {
 #if OPTION_ENCODER
     int counter;
     bool clicked;
-    encoder::read(counter, clicked);
+    encoder::read(tick_usec, counter, clicked);
     if (counter != 0 || clicked) {
-        g_timeOfLastActivity = millis();
+        idle::noteEncoderActivity();
     }
     onEncoder(tick_usec, counter, clicked);
 #endif
 
     //
-    uint32_t inactivityPeriod = millis() - g_timeOfLastActivity;
-
-    g_idle = inactivityPeriod >= IDLE_TIMEOUT_MS;
+    uint32_t inactivityPeriod = idle::getGuiAndEncoderInactivityPeriod();
 
 #if GUI_BACK_TO_MAIN_ENABLED
     if (g_activePageId == PAGE_ID_EVENT_QUEUE ||
@@ -1513,7 +1577,9 @@ void tick(uint32_t tick_usec) {
     if (g_activePageId == PAGE_ID_ASYNC_OPERATION_IN_PROGRESS) {
         static char *throbber[] = {"|", "/", "-", "\\", "|", "/", "-", "\\"};
         data::set(data::Cursor(), DATA_ID_ASYNC_OPERATION_THROBBER, data::Value(throbber[(tick_usec % 1000000) / 125000]), 0);
-        g_checkAsyncOperationStatus();
+		if (g_checkAsyncOperationStatus) {
+			g_checkAsyncOperationStatus();
+		}
     }
 
     if (psu::g_rprogAlarm) {

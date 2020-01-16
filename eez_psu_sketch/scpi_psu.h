@@ -30,6 +30,11 @@ namespace scpi {
 struct scpi_psu_t {
     scpi_reg_val_t *registers;
     uint8_t selected_channel_index;
+#if OPTION_SD_CARD
+    char currentDirectory[MAX_PATH_LENGTH + 1];
+#endif
+	bool isBufferOverrun;
+	uint32_t bufferOverrunTime;
 };
 
 void init(scpi_t &scpi_context,
@@ -40,16 +45,18 @@ void init(scpi_t &scpi_context,
     int16_t *error_queue_data,
     int16_t error_queue_size);
 
-void tick(uint32_t tickCount);
-
-void input(scpi_t &scpi_context, char ch);
 void input(scpi_t &scpi_context, const char *str, size_t size);
+
+void emptyBuffer(scpi_t &context);
+void onBufferOverrun(scpi_t &context);
 
 void printError(int_fast16_t err);
 
 void resultChoiceName(scpi_t *context, scpi_choice_def_t *choice, int tag);
 
-bool isIdle();
+extern bool g_busy;
+
+void resetContext(scpi_t *context);
 
 }
 }

@@ -22,6 +22,8 @@ namespace eez {
 namespace psu {
 namespace list {
 
+static const char *LIST_EXT = ".list";
+
 void init();
 
 void resetChannelList(Channel &channel);
@@ -51,7 +53,7 @@ bool areVoltageAndDwellListLengthsEquivalent(Channel &channel);
 bool areCurrentAndDwellListLengthsEquivalent(Channel &channel);
 bool areVoltageAndCurrentListLengthsEquivalent(Channel &channel);
 
-int checkLimits();
+int checkLimits(int iChannel);
 
 bool loadList(Channel &channel, const char *filePath, int *err);
 bool saveList(Channel &channel, const char *filePath, int *err);
@@ -66,6 +68,7 @@ void tick(uint32_t tick_usec);
 
 bool isActive();
 
+bool anyCounterVisible(uint32_t totalThreshold);
 bool getCurrentDwellTime(Channel &channel, int32_t &remaining, uint32_t &total);
 
 void abort();

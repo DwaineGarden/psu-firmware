@@ -48,6 +48,7 @@ inline bool isTracked() { return getType() == channel_dispatcher::TYPE_TRACKED; 
 float getUSet(const Channel &channel);
 float getUSetUnbalanced(const Channel &channel);
 float getUMon(const Channel &channel);
+float getUMonLast(const Channel &channel);
 float getUMonHistory(const Channel &channel, int position);
 float getUMonDac(const Channel &channel);
 float getULimit(const Channel &channel);
@@ -66,6 +67,7 @@ void setOvpDelay(Channel &channel, float delay);
 float getISet(const Channel &channel);
 float getISetUnbalanced(const Channel &channel);
 float getIMon(const Channel &channel);
+float getIMonLast(const Channel &channel);
 float getIMonHistory(const Channel &channel, int position);
 float getIMonDac(const Channel &channel);
 float getILimit(const Channel &channel);
@@ -103,6 +105,11 @@ void lowRippleAutoEnable(Channel& channel, bool enable);
 bool isTripped(Channel& channel);
 void clearProtection(Channel& channel);
 void disableProtection(Channel& channel);
+
+bool isOvpTripped(Channel& channel);
+bool isOcpTripped(Channel& channel);
+bool isOppTripped(Channel& channel);
+bool isOtpTripped(Channel& channel);
 
 void clearOtpProtection(int sensor);
 void setOtpParameters(Channel &channel, int state, float level, float delay);

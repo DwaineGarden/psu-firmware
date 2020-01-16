@@ -23,6 +23,7 @@
 #if OPTION_SD_CARD
 #include "sd_card.h"
 #endif
+#include "io_pins.h"
 
 #define CONF_COUNTER_THRESHOLD_IN_SECONDS 5
 
@@ -51,6 +52,7 @@ static struct {
     uint32_t nextPointTime;
     int32_t currentRemainingDwellTime;
     float currentTotalDwellTime;
+    uint32_t lastTickCount;
 } g_execution[CH_MAX];
 
 static bool g_active;
@@ -166,27 +168,25 @@ bool areVoltageAndCurrentListLengthsEquivalent(Channel &channel) {
     return areListLengthsEquivalent(g_channelsLists[channel.index - 1].voltageListLength, g_channelsLists[channel.index - 1].currentListLength);
 }
 
-int checkLimits() {
-    for (int i = 0; i < CH_NUM; ++i) {
-        Channel &channel = Channel::get(i);
+int checkLimits(int iChannel) {
+    Channel &channel = Channel::get(iChannel);
 
-        uint16_t voltageListLength = g_channelsLists[i].voltageListLength;
-        uint16_t currentListLength = g_channelsLists[i].currentListLength;
+    uint16_t voltageListLength = g_channelsLists[iChannel].voltageListLength;
+    uint16_t currentListLength = g_channelsLists[iChannel].currentListLength;
 
-        for (int j = 0; j < voltageListLength || j < currentListLength; ++j) {
-            float voltage = g_channelsLists[i].voltageList[j % voltageListLength];
-	        if (util::greater(voltage, channel_dispatcher::getULimit(channel), getPrecision(VALUE_TYPE_FLOAT_VOLT))) {
-                return SCPI_ERROR_VOLTAGE_LIMIT_EXCEEDED;
-	        }
+    for (int j = 0; j < voltageListLength || j < currentListLength; ++j) {
+        float voltage = g_channelsLists[iChannel].voltageList[j % voltageListLength];
+	    if (util::greater(voltage, channel_dispatcher::getULimit(channel), getPrecision(VALUE_TYPE_FLOAT_VOLT))) {
+            return SCPI_ERROR_VOLTAGE_LIMIT_EXCEEDED;
+	    }
 
-            float current = g_channelsLists[i].currentList[j % currentListLength];
-            if (util::greater(current, channel_dispatcher::getILimit(channel), getPrecision(VALUE_TYPE_FLOAT_AMPER))) {
-                return SCPI_ERROR_CURRENT_LIMIT_EXCEEDED;
-	        }
+        float current = g_channelsLists[iChannel].currentList[j % currentListLength];
+        if (util::greater(current, channel_dispatcher::getILimit(channel), getPrecision(VALUE_TYPE_FLOAT_AMPER))) {
+            return SCPI_ERROR_CURRENT_LIMIT_EXCEEDED;
+	    }
 
-	        if (util::greater(voltage * current, channel_dispatcher::getPowerLimit(channel), getPrecision(VALUE_TYPE_FLOAT_WATT))) {
-                return SCPI_ERROR_POWER_LIMIT_EXCEEDED;
-            }
+	    if (util::greater(voltage * current, channel_dispatcher::getPowerLimit(channel), getPrecision(VALUE_TYPE_FLOAT_WATT))) {
+            return SCPI_ERROR_POWER_LIMIT_EXCEEDED;
         }
     }
 
@@ -196,10 +196,11 @@ int checkLimits() {
 bool loadList(Channel &channel, const char *filePath, int *err) {
 #if OPTION_SD_CARD
     if (sd_card::g_testResult != TEST_OK) {
+        *err = SCPI_ERROR_MASS_STORAGE_ERROR;
         return false;
     }
 
-    if (!SD.exists(filePath)) {
+    if (!sd_card::exists(filePath, NULL)) {
         if (err) {
             *err = SCPI_ERROR_LIST_NOT_FOUND;
         }
@@ -309,7 +310,7 @@ bool loadList(Channel &channel, const char *filePath, int *err) {
     return success;
 #else
     if (err) {
-        *err = SCPI_ERROR_OPTION_NOT_INSTALLED;
+        *err = SCPI_ERROR_HARDWARE_MISSING;
     }
     return false;
 #endif
@@ -318,12 +319,13 @@ bool loadList(Channel &channel, const char *filePath, int *err) {
 bool saveList(Channel &channel, const char *filePath, int *err) {
 #if OPTION_SD_CARD
     if (sd_card::g_testResult != TEST_OK) {
+        *err = SCPI_ERROR_MASS_STORAGE_ERROR;
         return false;
     }
 
     sd_card::makeParentDir(filePath);
 
-    SD.remove(filePath);
+    sd_card::deleteFile(filePath, NULL);
 
     File file = SD.open(filePath, FILE_WRITE);
 
@@ -372,7 +374,7 @@ bool saveList(Channel &channel, const char *filePath, int *err) {
     return true;
 #else
     if (err) {
-        *err = SCPI_ERROR_OPTION_NOT_INSTALLED;
+        *err = SCPI_ERROR_HARDWARE_MISSING;
     }
     return false;
 #endif
@@ -442,61 +444,74 @@ void tick(uint32_t tick_usec) {
     for (int i = 0; i < CH_NUM; ++i) {
         Channel &channel = Channel::get(i);
         if (g_execution[i].counter >= 0) {
-            if (channel.isTripped()) {
+            if (channel_dispatcher::isTripped(channel)) {
                 abort();
                 return;
             }
 
             g_active = true;
 
-            bool set = false;
+            unsigned long currentTime = millis();
 
-            if (g_execution[i].it == -1) {
-                set = true;
+            uint32_t tickCount;
+            if (g_execution[i].currentTotalDwellTime > CONF_COUNTER_THRESHOLD_IN_SECONDS) {
+                tickCount = millis();
             } else {
-                if (g_execution[i].currentTotalDwellTime > CONF_COUNTER_THRESHOLD_IN_SECONDS) {
-                    g_execution[i].currentRemainingDwellTime = g_execution[i].nextPointTime - millis();
-                } else {
-                    g_execution[i].currentRemainingDwellTime = g_execution[i].nextPointTime - tick_usec;
-                }
-
-                if (g_execution[i].currentRemainingDwellTime <= 0) {
-                    set = true;
-                }
+                tickCount = tick_usec;
             }
 
-            if (set) {
-                if (++g_execution[i].it == maxListsSize(channel)) {
-                    if (g_execution[i].counter > 0) {
-                        if (--g_execution[i].counter == 0) {
-                            g_execution[i].counter = -1;
-                            trigger::setTriggerFinished(channel);
-                            return;
+            if (io_pins::isInhibited()) {
+                if (g_execution[i].it != -1) {
+                    g_execution[i].nextPointTime += tickCount - g_execution[i].lastTickCount;
+                }
+            } else {
+                bool set = false;
+
+                if (g_execution[i].it == -1) {
+                    set = true;
+                } else {
+                    g_execution[i].currentRemainingDwellTime = g_execution[i].nextPointTime - tickCount;
+
+                    if (g_execution[i].currentRemainingDwellTime <= 0) {
+                        set = true;
+                    }
+                }
+
+                if (set) {
+                    if (++g_execution[i].it == maxListsSize(channel)) {
+                        if (g_execution[i].counter > 0) {
+                            if (--g_execution[i].counter == 0) {
+                                g_execution[i].counter = -1;
+                                trigger::setTriggerFinished(channel);
+                                return;
+                            }
                         }
+
+                        g_execution[i].it = 0;
                     }
 
-                    g_execution[i].it = 0;
-                }
+                    int err;
+                    if (!setListValue(channel, g_execution[i].it, &err)) {
+                        generateError(err);
+                        abort();
+                        return;
+                    }
 
-                int err;
-                if (!setListValue(channel, g_execution[i].it, &err)) {
-                    generateError(err);
-                    abort();
-                    return;
-                }
-
-                g_execution[i].currentTotalDwellTime = g_channelsLists[i].dwellList[g_execution[i].it % g_channelsLists[i].dwellListLength];
-                // if dwell time is greater then CONF_COUNTER_THRESHOLD_IN_SECONDS ...
-                if (g_execution[i].currentTotalDwellTime > CONF_COUNTER_THRESHOLD_IN_SECONDS) {
-                    // ... then count in milliseconds
-                    g_execution[i].currentRemainingDwellTime = (uint32_t)round(g_execution[i].currentTotalDwellTime * 1000L);
-                    g_execution[i].nextPointTime = millis() + g_execution[i].currentRemainingDwellTime;
-                } else {
-                    // ... else count in microseconds
-                    g_execution[i].currentRemainingDwellTime = (uint32_t)round(g_execution[i].currentTotalDwellTime * 1000000L);
-                    g_execution[i].nextPointTime = tick_usec + g_execution[i].currentRemainingDwellTime;
+                    g_execution[i].currentTotalDwellTime = g_channelsLists[i].dwellList[g_execution[i].it % g_channelsLists[i].dwellListLength];
+                    // if dwell time is greater then CONF_COUNTER_THRESHOLD_IN_SECONDS ...
+                    if (g_execution[i].currentTotalDwellTime > CONF_COUNTER_THRESHOLD_IN_SECONDS) {
+                        // ... then count in milliseconds
+                        g_execution[i].currentRemainingDwellTime = (uint32_t)round(g_execution[i].currentTotalDwellTime * 1000L);
+                        g_execution[i].nextPointTime = millis() + g_execution[i].currentRemainingDwellTime;
+                    } else {
+                        // ... else count in microseconds
+                        g_execution[i].currentRemainingDwellTime = (uint32_t)round(g_execution[i].currentTotalDwellTime * 1000000L);
+                        g_execution[i].nextPointTime = tick_usec + g_execution[i].currentRemainingDwellTime;
+                    }
                 }
             }
+
+            g_execution[i].lastTickCount = tickCount;
         }
     }
 }
@@ -507,6 +522,15 @@ bool isActive() {
 
 bool isActive(Channel &channel) {
     return g_execution[channel.index - 1].counter >= 0;
+}
+
+bool anyCounterVisible(uint32_t totalThreshold) {
+	for (int i = 0; i < CH_NUM; ++i) {
+		if (g_execution[i].counter >= 0 && (uint32_t)ceilf(g_execution[i].currentTotalDwellTime) >= totalThreshold) {
+			return true;
+		}
+	}
+	return false;
 }
 
 bool getCurrentDwellTime(Channel &channel, int32_t &remaining, uint32_t &total) {
